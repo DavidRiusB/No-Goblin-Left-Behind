@@ -4,10 +4,87 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TableStatus {
+  OPEN
+  FULL
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum JoinRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model User {
+  id               String   @id @default(uuid())
+  username         String   @unique
+  email            String   @unique
+  password         String
+  avatar_url       String?
+  bio              String?
+  preferred_systems String[]
+  play_style_tags  String[]
+  created_at       DateTime @default(now())
+
+  tables_as_dm     Table[]
+  join_requests    JoinRequest[]
+  reviews_written  Review[] @relation("ReviewsWritten")
+  reviews_received Review[] @relation("ReviewsReceived")
+}
+
+model Table {
+  id           String      @id @default(uuid())
+  dm_id        String
+  title        String
+  system       String
+  description  String?
+  scheduled_at DateTime
+  platform     String
+  is_online    Boolean     @default(true)
+  seats_total  Int
+  seats_filled Int         @default(0)
+  auto_accept  Boolean     @default(false)
+  status       TableStatus @default(OPEN)
+  created_at   DateTime    @default(now())
+
+  dm            User          @relation(fields: [dm_id], references: [id])
+  join_requests JoinRequest[]
+  reviews       Review[]
+}
+
+model JoinRequest {
+  id         String            @id @default(uuid())
+  user_id    String
+  table_id   String
+  message    String?
+  status     JoinRequestStatus @default(PENDING)
+  created_at DateTime          @default(now())
+
+  user  User  @relation(fields: [user_id], references: [id])
+  table Table @relation(fields: [table_id], references: [id])
+}
+
+model Review {
+  id             String   @id @default(uuid())
+  reviewer_id    String
+  target_user_id String
+  table_id       String
+  badges         String[]
+  written_review String?
+  created_at     DateTime @default(now())
+
+  reviewer User  @relation("ReviewsWritten", fields: [reviewer_id], references: [id])
+  target   User  @relation("ReviewsReceived", fields: [target_user_id], references: [id])
+  table    Table @relation(fields: [table_id], references: [id])
 }
