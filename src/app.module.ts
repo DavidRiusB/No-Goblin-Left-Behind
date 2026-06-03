@@ -1,15 +1,29 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
-import { TablesModule } from './tables/tables.module';
-import { ReviewsModule } from './reviews/reviews.module';
-import { NotificationsModule } from './notifications/notifications.module';
-import { GatewayGateway } from './gateway/gateway.gateway';
+import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
+import { TablesModule } from './modules/tables/tables.module';
+import { ReviewsModule } from './modules/reviews/reviews.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { GatewayGateway } from './modules/gateway/gateway.gateway';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import typeormConfig from './config/typeorm.config';
 
 @Module({
-  imports: [AuthModule, UsersModule, TablesModule, ReviewsModule, NotificationsModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true, load: [typeormConfig] }),
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => config.get<any>('typeorm'),
+    }),
+    AuthModule,
+    UsersModule,
+    TablesModule,
+    ReviewsModule,
+    NotificationsModule,
+  ],
   controllers: [AppController],
   providers: [AppService, GatewayGateway],
 })
