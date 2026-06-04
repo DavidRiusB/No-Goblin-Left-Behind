@@ -1,9 +1,15 @@
+import { Credential } from 'src/modules/auth/entity/auth.entity';
+import { JoinRequest } from 'src/modules/tables/entities/join-request.entity';
+import { TableMembership } from 'src/modules/tables/entities/table-membership.entity';
+
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToOne,
+  OneToMany,
 } from 'typeorm';
 
 @Entity('users')
@@ -17,9 +23,15 @@ export class User {
   username!: string;
 
   @Column({ unique: true })
-  email!: string;
+  notificationEmail!: string;
 
   // Profile
+
+  @Column({
+    type: 'date',
+    nullable: true,
+  })
+  birthDate?: Date;
 
   @Column({ nullable: true, length: 100 })
   displayName?: string;
@@ -53,6 +65,21 @@ export class User {
     length: 100,
   })
   location?: string;
+
+  // =========================
+  // Relations
+  // =========================
+
+  @OneToOne(() => Credential, (credential) => credential.user, {
+    cascade: true,
+  })
+  credential!: Credential;
+
+  @OneToMany(() => JoinRequest, (request) => request.user)
+  joinRequests!: JoinRequest[];
+
+  @OneToMany(() => TableMembership, (membership) => membership.user)
+  memberships!: TableMembership[];
 
   // Timestamps
 
