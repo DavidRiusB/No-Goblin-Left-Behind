@@ -1,0 +1,48 @@
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { User } from './entity/user.entity';
+import { EntityManager, Repository } from 'typeorm';
+import { RegisterUserDto } from '../auth/dtos/refister.dto';
+
+@Injectable()
+export class UserRepository {
+  constructor(
+    @InjectRepository(User) private readonly userRepository: Repository<User>,
+  ) {}
+
+  private getRepo(manager?: EntityManager): Repository<User> {
+    return manager ? manager.getRepository(User) : this.userRepository;
+  }
+
+  async create(
+    newUserData: RegisterUserDto,
+    manager?: EntityManager,
+  ): Promise<User> {
+    try {
+      const repo = this.getRepo(manager);
+      const { username, email } = newUserData;
+      const newUser = repo.create({
+        username,
+        notificationEmail: email,
+      });
+      return await repo.save(newUser);
+    } catch (error: any) {
+      if (error.code === '23505') {
+        if (error.detail?.includes('username')) {
+          throw new BadRequestException('Username already exists');
+        }
+
+        if (error.detail?.includes('notification_email')) {
+          throw new BadRequestException('Email already exists');
+        }
+
+        throw new BadRequestException('User already exists');
+      }
+      throw new InternalServerErrorException('Error creating user');
+    }
+  }
+}
