@@ -1,3 +1,4 @@
+import { Role } from 'src/common/enums/roles.enum';
 import { Credential } from 'src/modules/auth/entity/auth.entity';
 import { JoinRequest } from 'src/modules/tables/entities/join-request.entity';
 import { TableMembership } from 'src/modules/tables/entities/table-membership.entity';
@@ -24,6 +25,13 @@ export class User {
 
   @Column({ unique: true })
   notificationEmail!: string;
+
+  @Column({
+    type: 'enum',
+    enum: Role,
+    default: Role.User,
+  })
+  role!: Role;
 
   // Profile
 

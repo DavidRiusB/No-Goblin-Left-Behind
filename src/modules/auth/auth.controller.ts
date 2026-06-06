@@ -3,16 +3,18 @@ import { AuthService } from './auth.service';
 import { LoginUserDto } from './dtos/login.dto';
 import type { Response } from 'express';
 import { RegisterUserDto } from './dtos/refister.dto';
-import { access } from 'fs';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  cookieOptions = {
-    httpOnly: true,
-    secure: false,
-  };
+  get cookieOptions() {
+    return {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax' as const,
+    };
+  }
 
   @Post('register')
   async register(
@@ -25,7 +27,7 @@ export class AuthController {
       password: newUserData.password,
     });
     res.cookie('access_token', access_token, this.cookieOptions);
-    return user;
+    return user; // <- Full User ?
   }
 
   @Post('login')

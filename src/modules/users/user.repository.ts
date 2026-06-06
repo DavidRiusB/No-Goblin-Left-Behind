@@ -45,4 +45,16 @@ export class UserRepository {
       throw new InternalServerErrorException('Error creating user');
     }
   }
+
+  async adminSearchUsers(q: string, manager?: EntityManager): Promise<User[]> {
+    const repo = this.getRepo(manager);
+    return repo
+      .createQueryBuilder('user')
+      .where('user.username ILIKE :q', { q: `%${q}%` })
+      .orWhere('user.notificationEmail ILIKE :q', { q: `%${q}%` })
+      .orWhere('user.displayName ILIKE :q', { q: `%${q}%` })
+      .orderBy('user.username', 'ASC')
+      .limit(20)
+      .getMany();
+  }
 }
