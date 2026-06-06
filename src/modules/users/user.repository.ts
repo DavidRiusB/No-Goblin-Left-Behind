@@ -57,4 +57,23 @@ export class UserRepository {
       .limit(20)
       .getMany();
   }
+
+  async findById(id: string, manager?: EntityManager): Promise<User | null> {
+    const repo = manager ? manager.getRepository(User) : this.userRepository;
+    return repo.findOne({ where: { id } });
+  }
+
+  async update(user: User, manager?: EntityManager): Promise<User> {
+    const repo = this.getRepo(manager);
+    try {
+      return await repo.save(user);
+    } catch (error: any) {
+      if (error.code === '23505') {
+        throw new BadRequestException('User with provided data already exists');
+      }
+      throw new InternalServerErrorException(
+        'Unexpected error while updating user',
+      );
+    }
+  }
 }
