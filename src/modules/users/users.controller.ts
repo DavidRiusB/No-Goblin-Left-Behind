@@ -17,6 +17,12 @@ import type { JwtUser } from 'src/common/types/jwt-user.type';
 export class UsersController {
   constructor(private readonly userService: UsersService) {}
 
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  async getMe(@CurrentUser() user: JwtUser) {
+    return this.userService.findMe(user.userId);
+  }
+
   @Get('admin/search')
   // @UseGuards(JwtAuthGuard, RolesGuard)
   // @Roles(Role.Admin)

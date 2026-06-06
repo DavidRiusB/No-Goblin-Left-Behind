@@ -76,4 +76,9 @@ export class UserRepository {
       );
     }
   }
+
+  async softDelete(id: string, manager?: EntityManager): Promise<void> {
+    const repo = this.getRepo(manager);
+    await repo.softDelete(id);
+  }
 }
