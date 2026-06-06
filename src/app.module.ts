@@ -10,6 +10,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { GatewayGateway } from './modules/gateway/gateway.gateway';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import typeormConfig from './config/typeorm.config';
+import { SeederModule } from './database/seeders/seeder.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import typeormConfig from './config/typeorm.config';
     TablesModule,
     ReviewsModule,
     NotificationsModule,
+    SeederModule,
   ],
   controllers: [AppController],
   providers: [AppService, GatewayGateway],
