@@ -6,7 +6,7 @@ export class UsersController {
   constructor(private readonly userService: UsersService) {}
 
   @Get('admin/search')
-  // @UseGuards(JwtAuthGuard, RolesGuard)  <- uncomment when guards are ready
+  // @UseGuards(JwtAuthGuard, RolesGuard)
   // @Roles(Role.Admin)
   async adminSearchUsers(@Query('q') q: string) {
     return this.userService.adminSearchUsers(q);
