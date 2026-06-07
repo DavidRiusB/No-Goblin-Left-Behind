@@ -14,6 +14,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { TableMembership } from './table-membership.entity';
+import { Recurrence } from 'src/common/enums/recurrence.enum';
 
 @Entity({ name: 'tables' })
 export class Table {
@@ -90,6 +91,13 @@ export class Table {
   })
   estimatedDurationHours?: number;
 
+  @Column({
+    type: 'enum',
+    enum: Recurrence,
+    default: Recurrence.NONE,
+  })
+  recurrence!: Recurrence;
+
   // =========================
   // Logistics
   // =========================
@@ -120,6 +128,9 @@ export class Table {
 
   @Column()
   seatsTotal!: number;
+
+  @Column()
+  language!: string; //<= just added this... still thinking about it, could be enum
 
   // =========================
   // Settings

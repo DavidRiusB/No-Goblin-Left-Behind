@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -37,5 +38,11 @@ export class UsersController {
     @CurrentUser() user: JwtUser,
   ) {
     return this.userService.update(updateUserDto, user.userId);
+  }
+
+  @Delete('me')
+  @UseGuards(JwtAuthGuard)
+  async deleteMe(@CurrentUser() user: JwtUser): Promise<void> {
+    await this.userService.deleteMe(user.userId);
   }
 }
