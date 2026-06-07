@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Table } from './entities/table.entity';
 import { EntityManager, Repository } from 'typeorm';
@@ -6,6 +6,8 @@ import { EntityManager, Repository } from 'typeorm';
 import { TableStatus } from 'src/common/enums/table-status.enum';
 import { FindTablesDto } from './dtos/find-table.dto';
 import { MembershipStatus } from 'src/common/enums/membership-status,enum';
+import { CreateTableDto } from './dtos/create-table.dto';
+import { User } from '../users/entity/user.entity';
 
 @Injectable()
 export class TableRepository {
@@ -105,5 +107,41 @@ export class TableRepository {
     const [data, total] = await query.getManyAndCount();
 
     return { data, total };
+  }
+
+  async findById(id: string, manager?: EntityManager): Promise<Table | null> {
+    const repo = this.getRepo(manager);
+    return repo.findOne({
+      where: { id },
+      relations: { dm: true },
+    });
+  }
+
+  async create(
+    data: CreateTableDto,
+    dm: User,
+    manager?: EntityManager,
+  ): Promise<Table> {
+    const repo = this.getRepo(manager);
+    try {
+      const table = repo.create({ ...data, dm });
+      return await repo.save(table);
+    } catch (error: any) {
+      throw new InternalServerErrorException('Failed to create table');
+    }
+  }
+
+  async update(table: Table, manager?: EntityManager): Promise<Table> {
+    const repo = this.getRepo(manager);
+    try {
+      return await repo.save(table);
+    } catch (error: any) {
+      throw new InternalServerErrorException('Failed to update table');
+    }
+  }
+
+  async softDelete(id: string, manager?: EntityManager): Promise<void> {
+    const repo = this.getRepo(manager);
+    await repo.softDelete(id);
   }
 }
