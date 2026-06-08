@@ -144,4 +144,12 @@ export class TableRepository {
     const repo = this.getRepo(manager);
     await repo.softDelete(id);
   }
+
+  async findByDm(userId: string, manager?: EntityManager): Promise<Table[]> {
+    const repo = this.getRepo(manager);
+    return repo.find({
+      where: { dm: { id: userId } },
+      order: { createdAt: 'DESC' },
+    });
+  }
 }

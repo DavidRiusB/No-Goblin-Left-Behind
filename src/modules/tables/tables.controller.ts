@@ -30,6 +30,12 @@ export class TablesController {
     return this.tablesService.findWithFilters(filters);
   }
 
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  async getMyTables(@CurrentUser() requester: JwtUser) {
+    return this.tablesService.getMyTables(requester);
+  }
+
   @Get(':id')
   async findById(@Param('id', ParseUUIDPipe) id: string) {
     return this.tablesService.findById(id);
@@ -92,5 +98,34 @@ export class TablesController {
       updateJoinRequestDto,
       requester,
     );
+  }
+
+  @Delete(':id/requests/:requestId')
+  @UseGuards(JwtAuthGuard)
+  async withdrawJoinRequest(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('requestId', ParseUUIDPipe) requestId: string,
+    @CurrentUser() requester: JwtUser,
+  ) {
+    return this.tablesService.withdrawJoinRequest(id, requestId, requester);
+  }
+
+  @Delete(':id/members/me')
+  @UseGuards(JwtAuthGuard)
+  async leaveTable(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() requester: JwtUser,
+  ) {
+    return this.tablesService.leaveTable(id, requester);
+  }
+
+  @Delete(':id/members/:memberId')
+  @UseGuards(JwtAuthGuard)
+  async kickMember(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('memberId', ParseUUIDPipe) memberId: string,
+    @CurrentUser() requester: JwtUser,
+  ) {
+    return this.tablesService.kickMember(id, memberId, requester);
   }
 }

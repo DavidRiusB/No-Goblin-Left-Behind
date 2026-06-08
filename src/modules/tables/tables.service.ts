@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -18,6 +19,8 @@ import { CreateJoinRequestDto } from './dtos/create-join-request.dto';
 import { JoinRequest } from './entities/join-request.entity';
 import { UpdateJoinRequestDto } from './dtos/update-join-request.dto';
 import { JoinRequestStatus } from 'src/common/enums/join-request-status-enum';
+import { TableMembership } from './entities/table-membership.entity';
+import { MembershipStatus } from 'src/common/enums/membership-status,enum';
 
 @Injectable()
 export class TablesService {
@@ -123,5 +126,89 @@ export class TablesService {
       request,
       JoinRequestStatus.REJECTED,
     );
+  }
+
+  async withdrawJoinRequest(
+    tableId: string,
+    requestId: string,
+    requester: JwtUser,
+  ): Promise<JoinRequest> {
+    const request = await this.joinRequestRepository.findById(requestId);
+
+    if (!request) throw new NotFoundException('Join request not found');
+    if (request.table.id !== tableId) {
+      throw new BadRequestException('Request does not belong to this table');
+    }
+    if (request.user.id !== requester.userId) {
+      throw new ForbiddenException('You can only withdraw your own requests');
+    }
+    if (request.status !== JoinRequestStatus.PENDING) {
+      throw new BadRequestException('Only pending requests can be withdrawn');
+    }
+
+    return this.joinRequestRepository.updateStatus(
+      request,
+      JoinRequestStatus.WITHDRAWN,
+    );
+  }
+
+  async leaveTable(
+    tableId: string,
+    requester: JwtUser,
+  ): Promise<TableMembership> {
+    const membership = await this.tableMembershipRepository.findOne(
+      requester.userId,
+      tableId,
+    );
+
+    if (!membership) throw new NotFoundException('Membership not found');
+    if (membership.status !== MembershipStatus.ACTIVE) {
+      throw new BadRequestException(
+        'You are not an active member of this table',
+      );
+    }
+
+    return this.tableMembershipRepository.updateStatus(
+      membership,
+      MembershipStatus.LEFT,
+    );
+  }
+
+  async kickMember(
+    tableId: string,
+    memberId: string,
+    requester: JwtUser,
+  ): Promise<TableMembership> {
+    const membership = await this.tableMembershipRepository.findById(memberId);
+
+    if (!membership) throw new NotFoundException('Membership not found');
+    if (membership.table.id !== tableId) {
+      throw new BadRequestException('Membership does not belong to this table');
+    }
+
+    assertSelfOrAdmin(requester.userId, membership.table.dm.id, requester.role);
+
+    if (membership.status !== MembershipStatus.ACTIVE) {
+      throw new BadRequestException('Player is not an active member');
+    }
+
+    return this.tableMembershipRepository.updateStatus(
+      membership,
+      MembershipStatus.KICKED,
+    );
+  }
+
+  async getMyTables(requester: JwtUser): Promise<{
+    dmTables: Table[];
+    memberships: TableMembership[];
+    joinRequests: JoinRequest[];
+  }> {
+    const [dmTables, memberships, joinRequests] = await Promise.all([
+      this.tableRepository.findByDm(requester.userId),
+      this.tableMembershipRepository.findByUser(requester.userId),
+      this.joinRequestRepository.findByUser(requester.userId),
+    ]);
+
+    return { dmTables, memberships, joinRequests };
   }
 }

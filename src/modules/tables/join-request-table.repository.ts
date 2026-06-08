@@ -45,6 +45,18 @@ export class JoinRequestRepository {
     });
   }
 
+  async findByUser(
+    userId: string,
+    manager?: EntityManager,
+  ): Promise<JoinRequest[]> {
+    const repo = this.getRepo(manager);
+    return repo.find({
+      where: { user: { id: userId } },
+      relations: { table: true },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
   async create(
     data: { userId: string; tableId: string; message?: string },
     manager?: EntityManager,
