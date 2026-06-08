@@ -1,4 +1,7 @@
 import { ReviewBadge } from 'src/common/enums/review-badge';
+import { DmBadge } from 'src/common/enums/review-badge-dm.enum';
+import { PlayerBadge } from 'src/common/enums/review-badge-player.enum';
+import { SharedBadge } from 'src/common/enums/review-badge-shared.enum';
 import { Table } from 'src/modules/tables/entities/table.entity';
 import { User } from 'src/modules/users/entity/user.entity';
 import {
@@ -7,9 +10,11 @@ import {
   Entity,
   ManyToOne,
   PrimaryGeneratedColumn,
+  Unique,
 } from 'typeorm';
 
 @Entity('reviews')
+@Unique(['reviewer', 'targetUser', 'table'])
 export class Review {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -25,11 +30,27 @@ export class Review {
 
   @Column({
     type: 'enum',
-    enum: ReviewBadge,
+    enum: SharedBadge,
     array: true,
     default: [],
   })
-  badges!: ReviewBadge[];
+  sharedBadges!: SharedBadge[];
+
+  @Column({
+    type: 'enum',
+    enum: DmBadge,
+    array: true,
+    default: [],
+  })
+  dmBadges!: DmBadge[];
+
+  @Column({
+    type: 'enum',
+    enum: PlayerBadge,
+    array: true,
+    default: [],
+  })
+  playerBadges!: PlayerBadge[];
 
   @Column({
     type: 'text',
