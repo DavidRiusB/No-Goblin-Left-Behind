@@ -3,6 +3,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -22,6 +23,7 @@ export class TableMembership {
   @ManyToOne(() => Table, {
     nullable: false,
   })
+  @JoinColumn({ name: 'table_id' })
   table!: Table;
 
   @Column({

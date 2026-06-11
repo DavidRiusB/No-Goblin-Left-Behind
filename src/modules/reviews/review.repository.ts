@@ -7,6 +7,7 @@ import { TableMembership } from 'src/modules/tables/entities/table-membership.en
 import { User } from 'src/modules/users/entity/user.entity';
 import { Review } from './entity/review.entity';
 import { CreateReviewDto } from './dtos/create-review.dto';
+import { JoinRequestStatus } from 'src/common/enums/join-request-status-enum';
 
 @Injectable()
 export class ReviewRepository {

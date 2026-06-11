@@ -9,6 +9,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
   Unique,
@@ -22,12 +23,15 @@ export class Review {
   id!: string;
 
   @ManyToOne(() => User)
+  @JoinColumn({ name: 'reviewer_id' })
   reviewer!: User;
 
   @ManyToOne(() => User)
+  @JoinColumn({ name: 'target_user_id' })
   targetUser!: User;
 
   @ManyToOne(() => Table)
+  @JoinColumn({ name: 'table_id' })
   table!: Table;
 
   @Column({
