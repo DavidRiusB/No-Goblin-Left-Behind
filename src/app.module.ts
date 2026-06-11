@@ -7,10 +7,11 @@ import { UsersModule } from './modules/users/users.module';
 import { TablesModule } from './modules/tables/tables.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
-import { GatewayGateway } from './modules/gateway/gateway.gateway';
+
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import typeormConfig from './config/typeorm.config';
 import { SeederModule } from './database/seeders/seeder.module';
+import { RealtimeModule } from './modules/realtime/realtime.module';
 
 @Module({
   imports: [
@@ -30,8 +31,9 @@ import { SeederModule } from './database/seeders/seeder.module';
     ReviewsModule,
     NotificationsModule,
     SeederModule,
+    RealtimeModule,
   ],
   controllers: [AppController],
-  providers: [AppService, GatewayGateway],
+  providers: [AppService],
 })
 export class AppModule {}
