@@ -12,6 +12,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import typeormConfig from './config/typeorm.config';
 import { SeederModule } from './database/seeders/seeder.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
+import { ChatModule } from './modules/chat/chat.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { RealtimeModule } from './modules/realtime/realtime.module';
     NotificationsModule,
     SeederModule,
     RealtimeModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],
