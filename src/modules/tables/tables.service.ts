@@ -20,7 +20,10 @@ import { JoinRequest } from './entities/join-request.entity';
 import { UpdateJoinRequestDto } from './dtos/update-join-request.dto';
 import { JoinRequestStatus } from 'src/common/enums/join-request-status-enum';
 import { TableMembership } from './entities/table-membership.entity';
-import { MembershipStatus } from 'src/common/enums/membership-status,enum';
+import { MembershipStatus } from 'src/common/enums/membership-status.enum';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from 'src/common/enums/notification-type.enum';
+import { ConversationService } from '../chat/conversation.service';
 
 @Injectable()
 export class TablesService {
@@ -28,6 +31,8 @@ export class TablesService {
     private readonly tableRepository: TableRepository,
     private readonly joinRequestRepository: JoinRequestRepository,
     private readonly tableMembershipRepository: TableMembershipRepository,
+    private readonly notificationsService: NotificationsService,
+    private readonly conversationService: ConversationService,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -82,11 +87,23 @@ export class TablesService {
       );
     }
 
-    return this.joinRequestRepository.create({
+    const request = await this.joinRequestRepository.create({
       userId: requester.userId,
       tableId,
       message: data.message,
     });
+
+    await this.notificationsService.notify(
+      table.dm.id,
+      NotificationType.REQUEST_RECEIVED,
+      { tableId, tableTitle: table.title, requesterId: requester.userId },
+    );
+    await this.conversationService.openConversation(
+      requester.userId,
+      table.dm.id,
+    );
+
+    return request;
   }
 
   async updateJoinRequest(

@@ -1,4 +1,3 @@
-// src/modules/chat/chat.gateway.ts
 import {
   WebSocketGateway,
   WebSocketServer,
@@ -9,6 +8,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { ChatService } from './chat.service';
+import { ConversationService } from './conversation.service';
 
 interface AuthedSocket extends Socket {
   data: { userId: string; email: string; role: string };
@@ -21,7 +21,57 @@ export class ChatGateway {
   @WebSocketServer()
   server!: Server;
 
-  constructor(private readonly chatService: ChatService) {}
+  constructor(
+    private readonly chatService: ChatService,
+    private readonly conversationService: ConversationService,
+  ) {}
+
+  @SubscribeMessage('joinConversation')
+  async onJoinConversation(
+    @ConnectedSocket() client: AuthedSocket,
+    @MessageBody() data: { conversationId: string },
+  ) {
+    try {
+      await this.conversationService.assertCanMessage(
+        data.conversationId,
+        client.data.userId,
+      );
+      client.join(`conversation:${data.conversationId}`);
+      return { ok: true, room: `conversation:${data.conversationId}` };
+    } catch {
+      return { ok: false, error: 'Access denied' };
+    }
+  }
+
+  @SubscribeMessage('sendDirectMessage')
+  async onSendDirectMessage(
+    @ConnectedSocket() client: AuthedSocket,
+    @MessageBody() data: { conversationId: string; content: string },
+  ) {
+    try {
+      const message = await this.conversationService.sendMessage(
+        data.conversationId,
+        client.data.userId,
+        data.content,
+      );
+      this.server
+        .to(`conversation:${data.conversationId}`)
+        .emit('newDirectMessage', {
+          id: message.id,
+          conversationId: data.conversationId,
+          content: message.content,
+          sender: {
+            id: message.sender.id,
+            username: message.sender.username,
+            displayName: message.sender.displayName,
+          },
+          createdAt: message.createdAt,
+        });
+      return { ok: true };
+    } catch (err: any) {
+      return { ok: false, error: err.message ?? 'Failed to send' };
+    }
+  }
 
   @SubscribeMessage('joinTableRoom')
   async onJoinTableRoom(

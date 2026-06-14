@@ -8,7 +8,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Table } from './table.entity';
-import { MembershipStatus } from 'src/common/enums/membership-status,enum';
+import { MembershipStatus } from 'src/common/enums/membership-status.enum';
 
 @Entity('table_memberships')
 export class TableMembership {

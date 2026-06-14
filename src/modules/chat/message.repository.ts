@@ -6,7 +6,8 @@ import { Message } from './entities/message.entity';
 import { Table } from 'src/modules/tables/entities/table.entity';
 import { TableMembership } from 'src/modules/tables/entities/table-membership.entity';
 import { User } from 'src/modules/users/entity/user.entity';
-import { MembershipStatus } from 'src/common/enums/membership-status,enum';
+import { Conversation } from './entities/conversation.entity';
+import { MembershipStatus } from 'src/common/enums/membership-status.enum';
 
 @Injectable()
 export class MessageRepository {
@@ -73,6 +74,42 @@ export class MessageRepository {
     return this.messageRepository.find({
       where: {
         table: { id: tableId },
+        ...(before ? { createdAt: LessThan(before) } : {}),
+      },
+      relations: { sender: true },
+      order: { createdAt: 'DESC' },
+      take: limit,
+    });
+  }
+  async createInConversation(data: {
+    conversationId: string;
+    senderId: string;
+    content: string;
+  }): Promise<Message> {
+    try {
+      const message = this.messageRepository.create({
+        conversation: { id: data.conversationId } as Conversation,
+        sender: { id: data.senderId } as User,
+        content: data.content,
+      });
+      const saved = await this.messageRepository.save(message);
+      return this.messageRepository.findOneOrFail({
+        where: { id: saved.id },
+        relations: { sender: true },
+      });
+    } catch {
+      throw new InternalServerErrorException('Failed to save message');
+    }
+  }
+
+  async findByConversation(
+    conversationId: string,
+    limit: number,
+    before?: Date,
+  ): Promise<Message[]> {
+    return this.messageRepository.find({
+      where: {
+        conversation: { id: conversationId },
         ...(before ? { createdAt: LessThan(before) } : {}),
       },
       relations: { sender: true },

@@ -67,6 +67,10 @@ export class RealtimeGateway
     this.logger.log(`Disconnected: ${client.data?.userId ?? client.id}`);
   }
 
+  emitToUser(userId: string, event: string, payload: unknown): void {
+    this.server.to(`user:${userId}`).emit(event, payload);
+  }
+
   private extractToken(client: Socket): string | null {
     // 1) cookie (web clients)
     const cookieHeader = client.handshake.headers.cookie;

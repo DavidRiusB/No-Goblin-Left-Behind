@@ -5,7 +5,7 @@ import { EntityManager, Repository } from 'typeorm';
 
 import { TableStatus } from 'src/common/enums/table-status.enum';
 import { FindTablesDto } from './dtos/find-table.dto';
-import { MembershipStatus } from 'src/common/enums/membership-status,enum';
+import { MembershipStatus } from 'src/common/enums/membership-status.enum';
 import { CreateTableDto } from './dtos/create-table.dto';
 import { User } from '../users/entity/user.entity';
 

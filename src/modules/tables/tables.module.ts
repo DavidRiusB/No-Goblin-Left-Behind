@@ -8,9 +8,15 @@ import { JoinRequestRepository } from './join-request-table.repository';
 import { JoinRequest } from './entities/join-request.entity';
 import { TableMembership } from './entities/table-membership.entity';
 import { TableMembershipRepository } from './tables-membership.repository';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { ChatModule } from '../chat/chat.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Table, JoinRequest, TableMembership])],
+  imports: [
+    TypeOrmModule.forFeature([Table, JoinRequest, TableMembership]),
+    NotificationsModule,
+    ChatModule,
+  ],
   providers: [
     TablesService,
     TableRepository,

@@ -4,7 +4,7 @@ import { TableMembership } from './entities/table-membership.entity';
 import { EntityManager, Repository } from 'typeorm';
 import { User } from '../users/entity/user.entity';
 import { Table } from './entities/table.entity';
-import { MembershipStatus } from 'src/common/enums/membership-status,enum';
+import { MembershipStatus } from 'src/common/enums/membership-status.enum';
 
 @Injectable()
 export class TableMembershipRepository {

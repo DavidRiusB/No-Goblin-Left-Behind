@@ -14,7 +14,7 @@ import { Recurrence } from 'src/common/enums/recurrence.enum';
 
 import { JoinRequestStatus } from 'src/common/enums/join-request-status-enum';
 import { hashPassword } from 'src/utils/hashing/bycryp.utils';
-import { MembershipStatus } from 'src/common/enums/membership-status,enum';
+import { MembershipStatus } from 'src/common/enums/membership-status.enum';
 
 @Injectable()
 export class SeederService {

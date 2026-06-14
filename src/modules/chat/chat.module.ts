@@ -8,10 +8,24 @@ import { ChatService } from './chat.service';
 import { ChatGateway } from './chat.gateway';
 import { ChatController } from './chat.controller';
 import { MessageRepository } from './message.repository';
+import { ConversationRepository } from './conversation.repository';
+import { Conversation } from './entities/conversation.entity';
+import { ConversationService } from './conversation.service';
+import { ConversationController } from './conversation.controller';
 
+// chat.module.ts
 @Module({
-  imports: [TypeOrmModule.forFeature([Message, Table, TableMembership])],
-  providers: [ChatService, ChatGateway, MessageRepository],
-  controllers: [ChatController],
+  imports: [
+    TypeOrmModule.forFeature([Message, Conversation, Table, TableMembership]),
+  ],
+  providers: [
+    ChatService,
+    ConversationService,
+    ChatGateway,
+    MessageRepository,
+    ConversationRepository,
+  ],
+  controllers: [ChatController, ConversationController],
+  exports: [ConversationService],
 })
 export class ChatModule {}
