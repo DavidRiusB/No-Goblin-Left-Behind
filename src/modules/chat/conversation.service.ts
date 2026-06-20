@@ -39,13 +39,15 @@ export class ConversationService {
     return conv;
   }
 
+  // ConversationService.sendMessage — return the conv it already loaded
   async sendMessage(conversationId: string, userId: string, content: string) {
-    await this.assertCanMessage(conversationId, userId);
-    return this.messageRepository.createInConversation({
+    const conv = await this.assertCanMessage(conversationId, userId); // already fetches
+    const message = await this.messageRepository.createInConversation({
       conversationId,
       senderId: userId,
       content,
     });
+    return { message, conversation: conv }; // hand both back
   }
 
   async getHistory(
@@ -92,5 +94,11 @@ export class ConversationService {
     conv.status = ConversationStatus.ACTIVE;
     conv.blockedBy = undefined;
     return this.conversationRepository.save(conv);
+  }
+  // ConversationService
+  async getById(id: string): Promise<Conversation> {
+    const conv = await this.conversationRepository.findById(id);
+    if (!conv) throw new NotFoundException('Conversation not found');
+    return conv;
   }
 }

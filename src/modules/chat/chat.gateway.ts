@@ -9,6 +9,8 @@ import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { ConversationService } from './conversation.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from 'src/common/enums/notification-type.enum';
 
 interface AuthedSocket extends Socket {
   data: { userId: string; email: string; role: string };
@@ -24,7 +26,19 @@ export class ChatGateway {
   constructor(
     private readonly chatService: ChatService,
     private readonly conversationService: ConversationService,
+    private readonly notificationsService: NotificationsService,
   ) {}
+
+  private getUserIdsInRoom(room: string): Set<string> {
+    const ids = new Set<string>();
+    const sockets = this.server.sockets.adapter.rooms.get(room);
+    if (!sockets) return ids;
+    for (const socketId of sockets) {
+      const socket = this.server.sockets.sockets.get(socketId);
+      if (socket?.data?.userId) ids.add(socket.data.userId);
+    }
+    return ids;
+  }
 
   @SubscribeMessage('joinConversation')
   async onJoinConversation(
@@ -49,11 +63,13 @@ export class ChatGateway {
     @MessageBody() data: { conversationId: string; content: string },
   ) {
     try {
-      const message = await this.conversationService.sendMessage(
-        data.conversationId,
-        client.data.userId,
-        data.content,
-      );
+      const { message, conversation } =
+        await this.conversationService.sendMessage(
+          data.conversationId,
+          client.data.userId,
+          data.content,
+        );
+
       this.server
         .to(`conversation:${data.conversationId}`)
         .emit('newDirectMessage', {
@@ -67,6 +83,28 @@ export class ChatGateway {
           },
           createdAt: message.createdAt,
         });
+
+      const otherUserId =
+        conversation.participantA.id === client.data.userId
+          ? conversation.participantB.id
+          : conversation.participantA.id;
+
+      const inRoom = this.getUserIdsInRoom(
+        `conversation:${data.conversationId}`,
+      );
+
+      if (!inRoom.has(otherUserId)) {
+        await this.notificationsService.notify(
+          otherUserId,
+          NotificationType.NEW_MESSAGE,
+          {
+            conversationId: data.conversationId,
+            messageId: message.id,
+            senderId: client.data.userId,
+          },
+        );
+      }
+
       return { ok: true };
     } catch (err: any) {
       return { ok: false, error: err.message ?? 'Failed to send' };
@@ -93,12 +131,12 @@ export class ChatGateway {
     @MessageBody() data: { tableId: string; content: string },
   ) {
     try {
-      const message = await this.chatService.sendMessage(
+      const { message, table } = await this.chatService.sendMessage(
         client.data.userId,
         data.tableId,
         data.content,
       );
-      // broadcast to everyone currently in the room
+
       this.server.to(`table:${data.tableId}`).emit('newMessage', {
         id: message.id,
         tableId: data.tableId,
@@ -110,6 +148,26 @@ export class ChatGateway {
         },
         createdAt: message.createdAt,
       });
+
+      const recipients = await this.chatService.getNotifyTargets(
+        table,
+        client.data.userId,
+      );
+      const inRoom = this.getUserIdsInRoom(`table:${data.tableId}`);
+
+      for (const userId of recipients) {
+        if (inRoom.has(userId)) continue;
+        await this.notificationsService.notify(
+          userId,
+          NotificationType.NEW_MESSAGE,
+          {
+            tableId: data.tableId,
+            messageId: message.id,
+            senderId: client.data.userId,
+          },
+        );
+      }
+
       return { ok: true };
     } catch (err: any) {
       return { ok: false, error: err.message ?? 'Failed to send' };

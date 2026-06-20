@@ -12,11 +12,12 @@ import { ConversationRepository } from './conversation.repository';
 import { Conversation } from './entities/conversation.entity';
 import { ConversationService } from './conversation.service';
 import { ConversationController } from './conversation.controller';
+import { NotificationsModule } from '../notifications/notifications.module';
 
-// chat.module.ts
 @Module({
   imports: [
     TypeOrmModule.forFeature([Message, Conversation, Table, TableMembership]),
+    NotificationsModule,
   ],
   providers: [
     ChatService,

@@ -1,4 +1,3 @@
-// src/modules/chat/message.repository.ts
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository, LessThan } from 'typeorm';
@@ -6,8 +5,8 @@ import { Message } from './entities/message.entity';
 import { Table } from 'src/modules/tables/entities/table.entity';
 import { TableMembership } from 'src/modules/tables/entities/table-membership.entity';
 import { User } from 'src/modules/users/entity/user.entity';
-import { Conversation } from './entities/conversation.entity';
 import { MembershipStatus } from 'src/common/enums/membership-status.enum';
+import { Conversation } from './entities/conversation.entity';
 
 @Injectable()
 export class MessageRepository {
@@ -24,15 +23,14 @@ export class MessageRepository {
     return manager ? manager.getRepository(Message) : this.messageRepository;
   }
 
-  // is this user allowed in the table room? DM or ACTIVE member
-  async canAccessTable(userId: string, tableId: string): Promise<boolean> {
-    const table = await this.tableRepository.findOne({
+  async findTableWithDm(tableId: string): Promise<Table | null> {
+    return this.tableRepository.findOne({
       where: { id: tableId },
       relations: { dm: true },
     });
-    if (!table) return false;
-    if (table.dm.id === userId) return true;
+  }
 
+  async isActiveMember(userId: string, tableId: string): Promise<boolean> {
     const membership = await this.membershipRepository.findOne({
       where: {
         user: { id: userId },
@@ -41,6 +39,13 @@ export class MessageRepository {
       },
     });
     return !!membership;
+  }
+
+  async findActiveMemberships(tableId: string): Promise<TableMembership[]> {
+    return this.membershipRepository.find({
+      where: { table: { id: tableId }, status: MembershipStatus.ACTIVE },
+      relations: { user: true },
+    });
   }
 
   async create(
@@ -55,7 +60,6 @@ export class MessageRepository {
         content: data.content,
       });
       const saved = await repo.save(message);
-      // reload with sender relation so the emitted payload has sender info
       return repo.findOneOrFail({
         where: { id: saved.id },
         relations: { sender: true },
@@ -65,7 +69,6 @@ export class MessageRepository {
     }
   }
 
-  // history, newest-first, cursor paginated by createdAt
   async findByTable(
     tableId: string,
     limit: number,
@@ -81,6 +84,7 @@ export class MessageRepository {
       take: limit,
     });
   }
+
   async createInConversation(data: {
     conversationId: string;
     senderId: string;
