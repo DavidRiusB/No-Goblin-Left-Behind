@@ -39,15 +39,14 @@ export class ConversationService {
     return conv;
   }
 
-  // ConversationService.sendMessage — return the conv it already loaded
   async sendMessage(conversationId: string, userId: string, content: string) {
-    const conv = await this.assertCanMessage(conversationId, userId); // already fetches
+    const conv = await this.assertCanMessage(conversationId, userId);
     const message = await this.messageRepository.createInConversation({
       conversationId,
       senderId: userId,
       content,
     });
-    return { message, conversation: conv }; // hand both back
+    return { message, conversation: conv };
   }
 
   async getHistory(

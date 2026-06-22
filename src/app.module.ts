@@ -13,6 +13,7 @@ import typeormConfig from './config/typeorm.config';
 import { SeederModule } from './database/seeders/seeder.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
 import { ChatModule } from './modules/chat/chat.module';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -26,6 +27,12 @@ import { ChatModule } from './modules/chat/chat.module';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => config.get<any>('typeorm'),
     }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // time window: 60 seconds (in ms)
+        limit: 100, // max 100 requests per window per client
+      },
+    ]),
     AuthModule,
     UsersModule,
     TablesModule,
