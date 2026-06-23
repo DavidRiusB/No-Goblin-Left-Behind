@@ -29,7 +29,15 @@ export class TableRepository {
     const query = repo
       .createQueryBuilder('table')
       .leftJoinAndSelect('table.dm', 'dm')
-      // subquery for available seats
+      .loadRelationCountAndMap(
+        'table.activeMemberCount', // property to attach to each Table
+        'table.memberships', // the relation to count
+        'member', // alias for the relation in the callback
+        (qb) =>
+          qb.where('member.status = :activeStatus', {
+            activeStatus: MembershipStatus.ACTIVE,
+          }),
+      )
       .where((qb) => {
         const subQuery = qb
           .subQuery()
