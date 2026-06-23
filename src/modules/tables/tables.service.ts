@@ -24,6 +24,7 @@ import { MembershipStatus } from 'src/common/enums/membership-status.enum';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from 'src/common/enums/notification-type.enum';
 import { ConversationService } from '../chat/conversation.service';
+import { ReviewRepository } from '../reviews/review.repository';
 
 @Injectable()
 export class TablesService {
@@ -33,6 +34,7 @@ export class TablesService {
     private readonly tableMembershipRepository: TableMembershipRepository,
     private readonly notificationsService: NotificationsService,
     private readonly conversationService: ConversationService,
+    private readonly reviewRepository: ReviewRepository,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -46,6 +48,75 @@ export class TablesService {
     const table = await this.tableRepository.findById(id);
     if (!table) throw new NotFoundException('Table not found');
     return table;
+  }
+
+  // tables.service.ts (or wherever — but it needs ReviewRepository injected)
+
+  async getTableDetail(id: string) {
+    const table = await this.tableRepository.findByIdWithMembers(id);
+    if (!table) throw new NotFoundException('Table not found');
+
+    // everyone whose reputation we want: the DM + active members
+    const memberUsers = table.memberships
+      .filter((m) => m.status === MembershipStatus.ACTIVE)
+      .map((m) => m.user);
+    const allUsers = [table.dm, ...memberUsers];
+    const userIds = allUsers.map((u) => u.id);
+
+    // one query for all their reviews
+    const reviews = await this.reviewRepository.findReceivedByUsers(userIds);
+
+    // tally badges per user, in JS
+    const summaryByUser = new Map<
+      string,
+      { badges: Record<string, number>; reviewCount: number }
+    >();
+    for (const user of allUsers) {
+      summaryByUser.set(user.id, { badges: {}, reviewCount: 0 });
+    }
+    for (const review of reviews) {
+      const entry = summaryByUser.get(review.targetUser.id);
+      if (!entry) continue;
+      entry.reviewCount += 1;
+      const allBadges = [
+        ...(review.sharedBadges ?? []),
+        ...(review.dmBadges ?? []),
+        ...(review.playerBadges ?? []),
+      ];
+      for (const badge of allBadges) {
+        entry.badges[badge] = (entry.badges[badge] ?? 0) + 1;
+      }
+    }
+
+    // stitch into a shape the page wants — trimmed users, no PII
+    const shapeUser = (u: User) => ({
+      id: u.id,
+      username: u.username,
+      displayName: u.displayName,
+      avatarUrl: u.avatarUrl,
+      ...summaryByUser.get(u.id)!,
+    });
+
+    return {
+      id: table.id,
+      title: table.title,
+      system: table.system,
+      description: table.description,
+      tableType: table.tableType,
+      recurrence: table.recurrence,
+      scheduledAt: table.scheduledAt,
+      timezone: table.timezone,
+      estimatedDurationHours: table.estimatedDurationHours,
+      isOnline: table.isOnline,
+      platform: table.platform,
+      location: table.location,
+      seatsTotal: table.seatsTotal,
+      language: table.language,
+      ageRequirement: table.ageRequirement,
+      status: table.status,
+      dm: shapeUser(table.dm),
+      players: memberUsers.map(shapeUser),
+    };
   }
 
   async create(data: CreateTableDto, dm: User): Promise<Table> {

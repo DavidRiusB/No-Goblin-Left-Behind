@@ -38,7 +38,7 @@ export class TablesController {
 
   @Get(':id')
   async findById(@Param('id', ParseUUIDPipe) id: string) {
-    return this.tablesService.findById(id);
+    return this.tablesService.getTableDetail(id);
   }
 
   @Post()

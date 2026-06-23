@@ -30,9 +30,9 @@ export class TableRepository {
       .createQueryBuilder('table')
       .leftJoinAndSelect('table.dm', 'dm')
       .loadRelationCountAndMap(
-        'table.activeMemberCount', // property to attach to each Table
-        'table.memberships', // the relation to count
-        'member', // alias for the relation in the callback
+        'table.activeMemberCount',
+        'table.memberships',
+        'member',
         (qb) =>
           qb.where('member.status = :activeStatus', {
             activeStatus: MembershipStatus.ACTIVE,
@@ -122,6 +122,17 @@ export class TableRepository {
     return repo.findOne({
       where: { id },
       relations: { dm: true },
+    });
+  }
+
+  // table + dm + members (with their user). for the detail view.
+  async findByIdWithMembers(id: string): Promise<Table | null> {
+    return this.tableRepository.findOne({
+      where: { id },
+      relations: {
+        dm: true,
+        memberships: { user: true },
+      },
     });
   }
 

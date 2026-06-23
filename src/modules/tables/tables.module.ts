@@ -10,10 +10,12 @@ import { TableMembership } from './entities/table-membership.entity';
 import { TableMembershipRepository } from './tables-membership.repository';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { ChatModule } from '../chat/chat.module';
+import { ReviewRepository } from '../reviews/review.repository';
+import { Review } from '../reviews/entity/review.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Table, JoinRequest, TableMembership]),
+    TypeOrmModule.forFeature([Table, JoinRequest, TableMembership, Review]),
     NotificationsModule,
     ChatModule,
   ],
@@ -22,6 +24,7 @@ import { ChatModule } from '../chat/chat.module';
     TableRepository,
     JoinRequestRepository,
     TableMembershipRepository,
+    ReviewRepository,
   ],
   controllers: [TablesController],
 })

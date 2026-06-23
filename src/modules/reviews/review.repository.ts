@@ -1,6 +1,6 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager, In, Repository } from 'typeorm';
 
 import { Table } from 'src/modules/tables/entities/table.entity';
 import { TableMembership } from 'src/modules/tables/entities/table-membership.entity';
@@ -130,6 +130,15 @@ export class ReviewRepository {
       where: { targetUser: { id: userId } },
       relations: { reviewer: true, table: true },
       order: { createdAt: 'DESC' },
+    });
+  }
+
+  // review.repository.ts
+  async findReceivedByUsers(userIds: string[]): Promise<Review[]> {
+    if (userIds.length === 0) return [];
+    return this.reviewRepository.find({
+      where: { targetUser: { id: In(userIds) } },
+      relations: { targetUser: true },
     });
   }
 
