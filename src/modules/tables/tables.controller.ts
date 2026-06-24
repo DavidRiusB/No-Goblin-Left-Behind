@@ -37,8 +37,27 @@ export class TablesController {
   }
 
   @Get(':id')
-  async findById(@Param('id', ParseUUIDPipe) id: string) {
+  async getTableDetail(@Param('id', ParseUUIDPipe) id: string) {
     return this.tablesService.getTableDetail(id);
+  }
+
+  @Get(':id/member-view')
+  @UseGuards(JwtAuthGuard)
+  async getMemberView(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() requester: JwtUser,
+  ) {
+    return this.tablesService.getTableMemberDetail(id, requester);
+  }
+
+  @Get(':id/players/:playerId')
+  @UseGuards(JwtAuthGuard)
+  async getPlayerDetail(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('playerId', ParseUUIDPipe) playerId: string,
+    @CurrentUser() requester: JwtUser,
+  ) {
+    return this.tablesService.getTablePlayerDetail(id, playerId, requester);
   }
 
   @Post()

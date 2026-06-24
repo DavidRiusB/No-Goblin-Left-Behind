@@ -25,7 +25,9 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from 'src/common/enums/notification-type.enum';
 import { ConversationService } from '../chat/conversation.service';
 import { ReviewRepository } from '../reviews/review.repository';
+import { Role } from 'src/common/enums/roles.enum';
 
+type UserSummary = { badges: Record<string, number>; reviewCount: number };
 @Injectable()
 export class TablesService {
   constructor(
@@ -37,6 +39,20 @@ export class TablesService {
     private readonly reviewRepository: ReviewRepository,
     private readonly dataSource: DataSource,
   ) {}
+
+  // throws if the requester isn't the DM, an active member, or an admin.
+  // the standard "are you allowed to see member-only stuff for this table" gate.
+  private assertTableMember(table: Table, requester: JwtUser): void {
+    const isDm = table.dm.id === requester.userId;
+    const isActiveMember = table.memberships.some(
+      (m) =>
+        m.user.id === requester.userId && m.status === MembershipStatus.ACTIVE,
+    );
+
+    if (!isDm && !isActiveMember && requester.role !== Role.Admin) {
+      throw new ForbiddenException('You are not a member of this table');
+    }
+  }
 
   async findWithFilters(
     filters: FindTablesDto,
@@ -50,26 +66,23 @@ export class TablesService {
     return table;
   }
 
- 
-  async getTableDetail(id: string) {
-    const table = await this.tableRepository.findByIdWithMembers(id);
-    if (!table) throw new NotFoundException('Table not found');
+  // tables.service.ts
 
-    // everyone whose reputation we want: the DM + active members
+  // ── shared display builder ─────────────────────────────────────────
+  // badge aggregation + response shaping. used by BOTH the public and the
+  // member-gated detail endpoints. this is pure display logic — no access
+  // rules, no private fields. access + private fields live in the callers.
+  private async buildTableDetailResponse(table: Table) {
     const memberUsers = table.memberships
       .filter((m) => m.status === MembershipStatus.ACTIVE)
       .map((m) => m.user);
     const allUsers = [table.dm, ...memberUsers];
     const userIds = allUsers.map((u) => u.id);
 
-    // one query for all their reviews
     const reviews = await this.reviewRepository.findReceivedByUsers(userIds);
 
-    // tally badges per user, in JS
-    const summaryByUser = new Map<
-      string,
-      { badges: Record<string, number>; reviewCount: number }
-    >();
+    const summaryByUser = new Map<string, UserSummary>();
+
     for (const user of allUsers) {
       summaryByUser.set(user.id, { badges: {}, reviewCount: 0 });
     }
@@ -87,7 +100,6 @@ export class TablesService {
       }
     }
 
-    // stitch into a shape the page wants — trimmed users, no PII
     const shapeUser = (u: User) => ({
       id: u.id,
       username: u.username,
@@ -115,6 +127,85 @@ export class TablesService {
       status: table.status,
       dm: shapeUser(table.dm),
       players: memberUsers.map(shapeUser),
+    };
+  }
+
+  // ── public detail ──────────────────────────────────────────────────
+  // no auth, no private fields. anyone browsing can hit this.
+  async getTableDetail(id: string) {
+    const table = await this.tableRepository.findByIdWithMembers(id);
+    if (!table) throw new NotFoundException('Table not found');
+    return this.buildTableDetailResponse(table);
+  }
+
+  // ── member-gated detail ────────────────────────────────────────────
+  // DM, active members, or admins only. THIS is where future private
+  // member-only fields (session links, house rules, discord invite, etc.)
+  // get added — never on getTableDetail above.
+  async getTableMemberDetail(id: string, requester: JwtUser) {
+    const table = await this.tableRepository.findByIdWithMembers(id);
+    if (!table) throw new NotFoundException('Table not found');
+
+    this.assertTableMember(table, requester);
+
+    const base = await this.buildTableDetailResponse(table);
+    return {
+      ...base,
+      // FUTURE: private member-only fields spread in here, e.g.
+      // sessionLinks: table.sessionLinks, houseRules: table.houseRules,
+    };
+  }
+
+  async getTablePlayerDetail(
+    tableId: string,
+    playerId: string,
+    requester: JwtUser,
+  ) {
+    const table = await this.tableRepository.findByIdWithMembers(tableId);
+    if (!table) throw new NotFoundException('Table not found');
+
+    this.assertTableMember(table, requester); // gate 1: requester allowed
+
+    // gate 2: the target must actually be in this table (DM or active member)
+    const targetIsDm = table.dm.id === playerId;
+    const targetMembership = table.memberships.find(
+      (m) => m.user.id === playerId && m.status === MembershipStatus.ACTIVE,
+    );
+    if (!targetIsDm && !targetMembership) {
+      throw new NotFoundException('Player not found in this table');
+    }
+
+    // resolve the target user object (from dm or the membership)
+    const targetUser = targetIsDm ? table.dm : targetMembership!.user;
+
+    // full reviews for this one user
+    const reviews = await this.reviewRepository.findReceivedByUser(
+      targetUser.id,
+    );
+
+    return {
+      id: targetUser.id,
+      username: targetUser.username,
+      displayName: targetUser.displayName,
+      avatarUrl: targetUser.avatarUrl,
+      bio: targetUser.bio,
+      preferredSystems: targetUser.preferredSystems,
+      playStyleTags: targetUser.playStyleTags,
+      // full reviews — written text + badges, shaped (no reviewer PII beyond public)
+      reviews: reviews.map((r) => ({
+        id: r.id,
+        sharedBadges: r.sharedBadges,
+        dmBadges: r.dmBadges,
+        playerBadges: r.playerBadges,
+        writtenReview: r.writtenReview,
+        createdAt: r.createdAt,
+        reviewer: {
+          id: r.reviewer.id,
+          username: r.reviewer.username,
+          displayName: r.reviewer.displayName,
+          avatarUrl: r.reviewer.avatarUrl,
+        },
+      })),
     };
   }
 
