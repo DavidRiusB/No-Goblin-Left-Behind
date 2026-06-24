@@ -50,8 +50,7 @@ export class TablesService {
     return table;
   }
 
-  // tables.service.ts (or wherever — but it needs ReviewRepository injected)
-
+ 
   async getTableDetail(id: string) {
     const table = await this.tableRepository.findByIdWithMembers(id);
     if (!table) throw new NotFoundException('Table not found');
