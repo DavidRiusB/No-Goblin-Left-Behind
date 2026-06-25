@@ -8,10 +8,11 @@ import { Review } from './entity/review.entity';
 
 import { ReviewsController } from './reviews.controller';
 import { ReviewRepository } from './review.repository';
+import { TableRepository } from '../tables/table.repository';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Review, Table, TableMembership])],
-  providers: [ReviewsService, ReviewRepository],
+  providers: [ReviewsService, ReviewRepository, TableRepository],
   controllers: [ReviewsController],
 })
 export class ReviewsModule {}

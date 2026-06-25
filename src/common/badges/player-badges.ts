@@ -1,0 +1,7 @@
+export const PLAYER_BADGES = [
+  'TEAM_PLAYER',
+  'IN_CHARACTER',
+  'MAIN_CHARACTER_SYNDROME',
+  'RULES_LAWYER',
+  'NO_SHOW',
+] as const;

@@ -1,0 +1,7 @@
+export const DM_BADGES = [
+  'GREAT_STORYTELLER',
+  'FAIR_RULES',
+  'WELL_PREPARED',
+  'RAILROADER',
+  'UNRESPONSIVE',
+] as const;

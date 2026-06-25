@@ -15,6 +15,7 @@ import { MembershipStatus } from 'src/common/enums/membership-status.enum';
 import { SharedBadge } from 'src/common/enums/review-badge-shared.enum';
 import { PlayerBadge } from 'src/common/enums/review-badge-player.enum';
 import { hashPassword } from 'src/utils/hashing/bycryp.utils';
+import { ReviewType } from 'src/common/enums/review-type.enum';
 
 @Injectable()
 export class SeederService {
@@ -264,11 +265,11 @@ export class SeederService {
     }
     await repo.save(
       repo.create({
+        type: ReviewType.PLAYER,
         reviewer,
         targetUser: target,
         table,
-        sharedBadges: [SharedBadge.FRIENDLY, SharedBadge.RELIABLE],
-        playerBadges: [PlayerBadge.TEAM_PLAYER],
+        badges: ['FRIENDLY', 'RELIABLE'],
         writtenReview:
           'Bob brought great energy and stayed in character all night.',
       }),

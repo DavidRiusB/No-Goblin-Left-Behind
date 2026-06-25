@@ -90,12 +90,8 @@ export class TablesService {
       const entry = summaryByUser.get(review.targetUser.id);
       if (!entry) continue;
       entry.reviewCount += 1;
-      const allBadges = [
-        ...(review.sharedBadges ?? []),
-        ...(review.dmBadges ?? []),
-        ...(review.playerBadges ?? []),
-      ];
-      for (const badge of allBadges) {
+      for (const badge of review.badges) {
+        // single array now
         entry.badges[badge] = (entry.badges[badge] ?? 0) + 1;
       }
     }
@@ -194,9 +190,7 @@ export class TablesService {
       // full reviews — written text + badges, shaped (no reviewer PII beyond public)
       reviews: reviews.map((r) => ({
         id: r.id,
-        sharedBadges: r.sharedBadges,
-        dmBadges: r.dmBadges,
-        playerBadges: r.playerBadges,
+        badges: r.badges,
         writtenReview: r.writtenReview,
         createdAt: r.createdAt,
         reviewer: {

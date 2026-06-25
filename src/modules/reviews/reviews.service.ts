@@ -11,11 +11,17 @@ import { CreateReviewDto } from './dtos/create-review.dto';
 import { Review } from './entity/review.entity';
 import { UpdateReviewDto } from './dtos/update-review.dto';
 import { assertSelfOrAdmin } from 'src/common/helpers/assert-self-or-admin.helper';
-import { Role } from 'src/common/enums/roles.enum';
+import { ReviewType } from 'src/common/enums/review-type.enum';
+import { allowedBadgesForType } from 'src/common/badges';
+import { TableRepository } from '../tables/table.repository';
 
+const MAX_BADGES = 3; // tunable; later a subscriber perk could raise this
 @Injectable()
 export class ReviewsService {
-  constructor(private readonly reviewRepository: ReviewRepository) {}
+  constructor(
+    private readonly reviewRepository: ReviewRepository,
+    private readonly tablesRepository: TableRepository,
+  ) {}
 
   async create(
     tableId: string,
@@ -26,38 +32,47 @@ export class ReviewsService {
       throw new BadRequestException('You cannot review yourself');
     }
 
-    const table = await this.reviewRepository.findTableWithDm(tableId);
+    // ONE fetch — table + dm + all members. everything we need.
+    const table = await this.tablesRepository.findByIdWithMembers(tableId);
     if (!table) throw new NotFoundException('Table not found');
 
-    const isTargetDm = table.dm.id === dto.targetUserId;
+    // derive type from target's role at this table
+    const targetIsDm = table.dm.id === dto.targetUserId;
+    const type = targetIsDm ? ReviewType.DM : ReviewType.PLAYER;
 
-    // badge role-context validation
-    if (!isTargetDm && dto.dmBadges?.length) {
-      throw new BadRequestException(
-        'DM badges can only be given to the table DM',
-      );
-    }
-    if (isTargetDm && dto.playerBadges?.length) {
-      throw new BadRequestException('Player badges cannot be given to the DM');
-    }
+    // both parties must be in the table — now just in-memory checks, no queries.
+    // "in the table" = is the DM, or has a membership (any status — they shared it).
+    const memberIds = new Set(table.memberships.map((m) => m.user.id));
+    const isInTable = (userId: string) =>
+      userId === table.dm.id || memberIds.has(userId);
 
-    // both parties must have shared the table
-    const reviewerInTable = await this.isUserInTable(
-      reviewer.userId,
-      tableId,
-      table.dm.id,
-    );
-    const targetInTable = await this.isUserInTable(
-      dto.targetUserId,
-      tableId,
-      table.dm.id,
-    );
-
-    if (!reviewerInTable || !targetInTable) {
+    if (!isInTable(reviewer.userId) || !isInTable(dto.targetUserId)) {
       throw new BadRequestException('Both users must have shared this table');
     }
 
-    // no duplicate review
+    // validate badges against what this review type allows
+    const badges = dto.badges ?? [];
+
+    if (badges.length > MAX_BADGES) {
+      throw new BadRequestException(
+        `A review can have at most ${MAX_BADGES} badges`,
+      );
+    }
+
+    // no duplicate badges within one review
+    if (new Set(badges).size !== badges.length) {
+      throw new BadRequestException('Duplicate badges are not allowed');
+    }
+
+    const allowed = allowedBadgesForType(type);
+    const invalid = badges.filter((b) => !allowed.includes(b));
+    if (invalid.length > 0) {
+      throw new BadRequestException(
+        `Invalid badges for a ${type} review: ${invalid.join(', ')}`,
+      );
+    }
+
+    // one review per reviewer/target/table
     const existing = await this.reviewRepository.findExisting(
       reviewer.userId,
       dto.targetUserId,
@@ -71,45 +86,12 @@ export class ReviewsService {
 
     return this.reviewRepository.create({
       reviewerId: reviewer.userId,
+      targetUserId: dto.targetUserId,
       tableId,
-      dto,
+      type,
+      badges,
+      writtenReview: dto.writtenReview,
     });
-  }
-
-  private async isUserInTable(
-    userId: string,
-    tableId: string,
-    dmId: string,
-  ): Promise<boolean> {
-    if (userId === dmId) return true;
-    const membership = await this.reviewRepository.findMembershipAnyStatus(
-      userId,
-      tableId,
-    );
-    return !!membership;
-  }
-
-  async findReceivedByUser(
-    targetUserId: string,
-    requester: JwtUser,
-  ): Promise<Review[]> {
-    await this.assertCanViewUserReviews(targetUserId, requester);
-    return this.reviewRepository.findReceivedByUser(targetUserId);
-  }
-
-  async findPostedByUser(authorId: string): Promise<Review[]> {
-    // admin-only, enforced at controller level via guard,
-    // but double-check here until RolesGuard exists
-    return this.reviewRepository.findPostedByUser(authorId);
-  }
-
-  async findById(id: string, requester: JwtUser): Promise<Review> {
-    const review = await this.reviewRepository.findById(id);
-    if (!review) throw new NotFoundException('Review not found');
-
-    // same visibility rule: you can see it if you could see the target's reviews
-    await this.assertCanViewUserReviews(review.targetUser.id, requester);
-    return review;
   }
 
   async update(
@@ -146,24 +128,5 @@ export class ReviewsService {
     assertSelfOrAdmin(requester.userId, review.reviewer.id, requester.role);
 
     await this.reviewRepository.softDelete(id);
-  }
-
-  private async assertCanViewUserReviews(
-    targetUserId: string,
-    requester: JwtUser,
-  ): Promise<void> {
-    if (requester.userId === targetUserId) return;
-    if (requester.role === Role.Admin) return;
-
-    const connected = await this.reviewRepository.hasTableConnection(
-      requester.userId,
-      targetUserId,
-    );
-
-    if (!connected) {
-      throw new ForbiddenException(
-        'You can only view reviews of users you share a table with',
-      );
-    }
   }
 }

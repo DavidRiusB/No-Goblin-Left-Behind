@@ -1,7 +1,5 @@
-import { ReviewBadge } from 'src/common/enums/review-badge';
-import { DmBadge } from 'src/common/enums/review-badge-dm.enum';
-import { PlayerBadge } from 'src/common/enums/review-badge-player.enum';
-import { SharedBadge } from 'src/common/enums/review-badge-shared.enum';
+// review.entity.ts — the changed bits
+import { ReviewType } from 'src/common/enums/review-type.enum';
 import { Table } from 'src/modules/tables/entities/table.entity';
 import { User } from 'src/modules/users/entity/user.entity';
 import {
@@ -36,32 +34,18 @@ export class Review {
 
   @Column({
     type: 'enum',
-    enum: SharedBadge,
-    array: true,
-    default: [],
+    enum: ReviewType,
   })
-  sharedBadges!: SharedBadge[];
-
-  @Column({
-    type: 'enum',
-    enum: DmBadge,
-    array: true,
-    default: [],
-  })
-  dmBadges!: DmBadge[];
-
-  @Column({
-    type: 'enum',
-    enum: PlayerBadge,
-    array: true,
-    default: [],
-  })
-  playerBadges!: PlayerBadge[];
+  type!: ReviewType;
 
   @Column({
     type: 'text',
-    nullable: true,
+    array: true,
+    default: [],
   })
+  badges!: string[];
+
+  @Column({ type: 'text', nullable: true })
   writtenReview?: string;
 
   @CreateDateColumn()
