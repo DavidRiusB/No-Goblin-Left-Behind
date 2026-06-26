@@ -26,6 +26,7 @@ import { NotificationType } from 'src/common/enums/notification-type.enum';
 import { ConversationService } from '../chat/conversation.service';
 import { ReviewRepository } from '../reviews/review.repository';
 import { Role } from 'src/common/enums/roles.enum';
+import { Review } from '../reviews/entity/review.entity';
 
 type UserSummary = { badges: Record<string, number>; reviewCount: number };
 @Injectable()
@@ -39,6 +40,33 @@ export class TablesService {
     private readonly reviewRepository: ReviewRepository,
     private readonly dataSource: DataSource,
   ) {}
+
+  // shapes a user's full profile + attributed reviews. pure shaping —
+  // no access logic. callers do their own gating, then call this.
+  private buildUserProfileResponse(user: User, reviews: Review[]) {
+    return {
+      id: user.id,
+      username: user.username,
+      displayName: user.displayName,
+      avatarUrl: user.avatarUrl,
+      bio: user.bio,
+      preferredSystems: user.preferredSystems,
+      playStyleTags: user.playStyleTags,
+      reviews: reviews.map((r) => ({
+        id: r.id,
+        type: r.type,
+        badges: r.badges,
+        writtenReview: r.writtenReview,
+        createdAt: r.createdAt,
+        reviewer: {
+          id: r.reviewer.id,
+          username: r.reviewer.username,
+          displayName: r.reviewer.displayName,
+          avatarUrl: r.reviewer.avatarUrl,
+        },
+      })),
+    };
+  }
 
   // throws if the requester isn't the DM, an active member, or an admin.
   // the standard "are you allowed to see member-only stuff for this table" gate.
@@ -65,8 +93,6 @@ export class TablesService {
     if (!table) throw new NotFoundException('Table not found');
     return table;
   }
-
-  // tables.service.ts
 
   // ── shared display builder ─────────────────────────────────────────
   // badge aggregation + response shaping. used by BOTH the public and the
@@ -152,6 +178,51 @@ export class TablesService {
     };
   }
 
+  async getConnectionProfile(
+    tableId: string,
+    targetUserId: string,
+    requester: JwtUser,
+  ) {
+    const table = await this.tableRepository.findById(tableId); // lean: table + dm
+    if (!table) throw new NotFoundException('Table not found');
+
+    // who's connected to this table by a request (any status — supports
+    // retroactive: a rejected requester keeps visibility for re-accept)
+    const requests = await this.joinRequestRepository.findByTable(tableId);
+    const hasRequest = (userId: string) =>
+      requests.some((r) => r.user.id === userId);
+
+    const requesterIsDm = table.dm.id === requester.userId;
+    const targetIsDm = table.dm.id === targetUserId;
+
+    // symmetric gate: a request connects the two parties, either direction
+    const allowed =
+      (requesterIsDm && hasRequest(targetUserId)) || // DM viewing a requester
+      (targetIsDm && hasRequest(requester.userId)) || // requester viewing the DM
+      requester.role === Role.Admin;
+
+    if (!allowed) {
+      throw new ForbiddenException('No request connects you to this profile');
+    }
+
+    // resolve the target user object — either the DM, or the requester from the request rows
+    let targetUser: User | undefined;
+    if (targetIsDm) {
+      targetUser = table.dm;
+    } else {
+      const req = requests.find((r) => r.user.id === targetUserId);
+      targetUser = req?.user;
+    }
+    if (!targetUser) {
+      throw new NotFoundException('User not found for this table');
+    }
+
+    const reviews = await this.reviewRepository.findReceivedByUser(
+      targetUser.id,
+    );
+    return this.buildUserProfileResponse(targetUser, reviews);
+  }
+
   async getTablePlayerDetail(
     tableId: string,
     playerId: string,
@@ -179,28 +250,7 @@ export class TablesService {
       targetUser.id,
     );
 
-    return {
-      id: targetUser.id,
-      username: targetUser.username,
-      displayName: targetUser.displayName,
-      avatarUrl: targetUser.avatarUrl,
-      bio: targetUser.bio,
-      preferredSystems: targetUser.preferredSystems,
-      playStyleTags: targetUser.playStyleTags,
-      // full reviews — written text + badges, shaped (no reviewer PII beyond public)
-      reviews: reviews.map((r) => ({
-        id: r.id,
-        badges: r.badges,
-        writtenReview: r.writtenReview,
-        createdAt: r.createdAt,
-        reviewer: {
-          id: r.reviewer.id,
-          username: r.reviewer.username,
-          displayName: r.reviewer.displayName,
-          avatarUrl: r.reviewer.avatarUrl,
-        },
-      })),
-    };
+    return this.buildUserProfileResponse(targetUser, reviews);
   }
 
   async create(data: CreateTableDto, dm: User): Promise<Table> {

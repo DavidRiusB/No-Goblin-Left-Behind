@@ -63,6 +63,15 @@ export class TablesController {
   ) {
     return this.tablesService.getTableRequests(tableId, requester);
   }
+  @Get(':id/connections/:userId')
+  @UseGuards(JwtAuthGuard)
+  async getConnectionProfile(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @CurrentUser() requester: JwtUser,
+  ) {
+    return this.tablesService.getConnectionProfile(id, userId, requester);
+  }
 
   @Get(':id/manage')
   @UseGuards(JwtAuthGuard)

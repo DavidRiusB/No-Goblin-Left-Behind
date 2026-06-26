@@ -77,9 +77,9 @@ export class JoinRequestRepository {
   ): Promise<JoinRequest[]> {
     const repo = this.getRepo(manager);
     return repo.find({
-      where: { table: { id: tableId } }, // no status filter — all of them
+      where: { table: { id: tableId } },
       relations: { user: true },
-      order: { createdAt: 'DESC' }, // newest first for a history view
+      order: { createdAt: 'DESC' },
     });
   }
 
