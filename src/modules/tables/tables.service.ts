@@ -33,7 +33,7 @@ export class TablesService {
   constructor(
     private readonly tableRepository: TableRepository,
     private readonly joinRequestRepository: JoinRequestRepository,
-    private readonly tableMembershipRepository: TableMembershipRepository,
+    private readonly membershipRepository: TableMembershipRepository,
     private readonly notificationsService: NotificationsService,
     private readonly conversationService: ConversationService,
     private readonly reviewRepository: ReviewRepository,
@@ -282,7 +282,7 @@ export class TablesService {
 
     if (data.status === JoinRequestStatus.APPROVED) {
       return await this.dataSource.transaction(async (manager) => {
-        await this.tableMembershipRepository.create(
+        await this.membershipRepository.create(
           { userId: request.user.id, tableId },
           manager,
         );
@@ -328,7 +328,7 @@ export class TablesService {
     tableId: string,
     requester: JwtUser,
   ): Promise<TableMembership> {
-    const membership = await this.tableMembershipRepository.findOne(
+    const membership = await this.membershipRepository.findOne(
       requester.userId,
       tableId,
     );
@@ -340,7 +340,7 @@ export class TablesService {
       );
     }
 
-    return this.tableMembershipRepository.updateStatus(
+    return this.membershipRepository.updateStatus(
       membership,
       MembershipStatus.LEFT,
     );
@@ -351,7 +351,7 @@ export class TablesService {
     memberId: string,
     requester: JwtUser,
   ): Promise<TableMembership> {
-    const membership = await this.tableMembershipRepository.findById(memberId);
+    const membership = await this.membershipRepository.findById(memberId);
 
     if (!membership) throw new NotFoundException('Membership not found');
     if (membership.table.id !== tableId) {
@@ -364,7 +364,7 @@ export class TablesService {
       throw new BadRequestException('Player is not an active member');
     }
 
-    return this.tableMembershipRepository.updateStatus(
+    return this.membershipRepository.updateStatus(
       membership,
       MembershipStatus.KICKED,
     );
@@ -377,10 +377,95 @@ export class TablesService {
   }> {
     const [dmTables, memberships, joinRequests] = await Promise.all([
       this.tableRepository.findByDm(requester.userId),
-      this.tableMembershipRepository.findByUser(requester.userId),
+      this.membershipRepository.findByUser(requester.userId),
       this.joinRequestRepository.findByUser(requester.userId),
     ]);
 
     return { dmTables, memberships, joinRequests };
+  }
+
+  async getTableRequests(tableId: string, requester: JwtUser) {
+    const table = await this.tableRepository.findById(tableId); // lean: table + dm
+    if (!table) throw new NotFoundException('Table not found');
+
+    // only the DM (or admin) can see who's requesting their table
+    if (table.dm.id !== requester.userId && requester.role !== Role.Admin) {
+      throw new ForbiddenException(
+        'Only the table owner can view its requests',
+      );
+    }
+
+    const requests =
+      await this.joinRequestRepository.findPendingByTable(tableId);
+
+    // shape — trim requester to public fields (no email/role)
+    return requests.map((r) => ({
+      id: r.id,
+      message: r.message,
+      createdAt: r.createdAt,
+      requester: {
+        id: r.user.id,
+        username: r.user.username,
+        displayName: r.user.displayName,
+        avatarUrl: r.user.avatarUrl,
+      },
+    }));
+  }
+
+  async getTableManagement(tableId: string, requester: JwtUser) {
+    const table = await this.tableRepository.findById(tableId); // lean: table + dm
+    if (!table) throw new NotFoundException('Table not found');
+
+    // DM-only (or admin) — members do NOT get the management view
+    if (table.dm.id !== requester.userId && requester.role !== Role.Admin) {
+      throw new ForbiddenException('Only the table owner can manage it');
+    }
+
+    const [memberships, requests] = await Promise.all([
+      this.membershipRepository.findByTable(tableId),
+      this.joinRequestRepository.findByTable(tableId),
+    ]);
+
+    const shapeUser = (u: User) => ({
+      id: u.id,
+      username: u.username,
+      displayName: u.displayName,
+      avatarUrl: u.avatarUrl,
+    });
+
+    return {
+      table: {
+        id: table.id,
+        title: table.title,
+        system: table.system,
+        description: table.description,
+        tableType: table.tableType,
+        recurrence: table.recurrence,
+        scheduledAt: table.scheduledAt,
+        timezone: table.timezone,
+        estimatedDurationHours: table.estimatedDurationHours,
+        isOnline: table.isOnline,
+        platform: table.platform,
+        location: table.location,
+        seatsTotal: table.seatsTotal,
+        language: table.language,
+        ageRequirement: table.ageRequirement,
+        status: table.status,
+      },
+      memberships: memberships.map((m) => ({
+        id: m.id,
+        status: m.status,
+        joinedAt: m.joinedAt,
+        endedAt: m.endedAt,
+        user: shapeUser(m.user),
+      })),
+      requests: requests.map((r) => ({
+        id: r.id,
+        status: r.status,
+        message: r.message,
+        createdAt: r.createdAt,
+        user: shapeUser(r.user),
+      })),
+    };
   }
 }

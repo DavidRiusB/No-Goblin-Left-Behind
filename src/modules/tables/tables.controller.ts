@@ -36,11 +36,6 @@ export class TablesController {
     return this.tablesService.getMyTables(requester);
   }
 
-  @Get(':id')
-  async getTableDetail(@Param('id', ParseUUIDPipe) id: string) {
-    return this.tablesService.getTableDetail(id);
-  }
-
   @Get(':id/member-view')
   @UseGuards(JwtAuthGuard)
   async getMemberView(
@@ -58,6 +53,29 @@ export class TablesController {
     @CurrentUser() requester: JwtUser,
   ) {
     return this.tablesService.getTablePlayerDetail(id, playerId, requester);
+  }
+
+  @Get(':id/requests')
+  @UseGuards(JwtAuthGuard)
+  async getTableRequests(
+    @Param('id', ParseUUIDPipe) tableId: string,
+    @CurrentUser() requester: JwtUser,
+  ) {
+    return this.tablesService.getTableRequests(tableId, requester);
+  }
+
+  @Get(':id/manage')
+  @UseGuards(JwtAuthGuard)
+  async getTableManagement(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() requester: JwtUser,
+  ) {
+    return this.tablesService.getTableManagement(id, requester);
+  }
+
+  @Get(':id')
+  async getTableDetail(@Param('id', ParseUUIDPipe) id: string) {
+    return this.tablesService.getTableDetail(id);
   }
 
   @Post()

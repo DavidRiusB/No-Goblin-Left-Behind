@@ -58,6 +58,18 @@ export class TableMembershipRepository {
     });
   }
 
+  async findByTable(
+    tableId: string,
+    manager?: EntityManager,
+  ): Promise<TableMembership[]> {
+    const repo = this.getRepo(manager);
+    return repo.find({
+      where: { table: { id: tableId } },
+      relations: { user: true },
+      order: { joinedAt: 'DESC' },
+    });
+  }
+
   async updateStatus(
     membership: TableMembership,
     status: MembershipStatus,

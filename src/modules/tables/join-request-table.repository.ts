@@ -56,6 +56,32 @@ export class JoinRequestRepository {
       order: { createdAt: 'DESC' },
     });
   }
+  async findPendingByTable(
+    tableId: string,
+    manager?: EntityManager,
+  ): Promise<JoinRequest[]> {
+    const repo = this.getRepo(manager);
+    return repo.find({
+      where: {
+        table: { id: tableId },
+        status: JoinRequestStatus.PENDING,
+      },
+      relations: { user: true },
+      order: { createdAt: 'ASC' },
+    });
+  }
+
+  async findByTable(
+    tableId: string,
+    manager?: EntityManager,
+  ): Promise<JoinRequest[]> {
+    const repo = this.getRepo(manager);
+    return repo.find({
+      where: { table: { id: tableId } }, // no status filter — all of them
+      relations: { user: true },
+      order: { createdAt: 'DESC' }, // newest first for a history view
+    });
+  }
 
   async create(
     data: { userId: string; tableId: string; message?: string },

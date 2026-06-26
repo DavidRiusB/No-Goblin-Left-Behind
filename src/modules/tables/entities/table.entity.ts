@@ -130,7 +130,7 @@ export class Table {
   seatsTotal!: number;
 
   @Column()
-  language!: string; //<= just added this... still thinking about it, could be enum
+  language!: string;
 
   // =========================
   // Settings
