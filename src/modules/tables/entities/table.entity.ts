@@ -1,20 +1,21 @@
+import { User } from 'src/modules/users/entity/user.entity';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { JoinRequest } from './join-request.entity';
+import { TableMembership } from './table-membership.entity';
+import { TableType } from 'src/common/enums/table-type.enum';
+import { ExperienceLevel } from 'src/common/enums/experience-level.enum';
+import { Recurrence } from 'src/common/enums/recurrence.enum';
 import { AgeRequirement } from 'src/common/enums/age-requirement.enum';
 import { TableStatus } from 'src/common/enums/table-status.enum';
-import { TableType } from 'src/common/enums/table-type.enum';
-import { User } from 'src/modules/users/entity/user.entity';
-import { JoinRequest } from './join-request.entity';
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  CreateDateColumn,
-  UpdateDateColumn,
-  JoinColumn,
-  OneToMany,
-} from 'typeorm';
-import { TableMembership } from './table-membership.entity';
-import { Recurrence } from 'src/common/enums/recurrence.enum';
 
 @Entity({ name: 'tables' })
 export class Table {
@@ -25,9 +26,7 @@ export class Table {
   // Relations
   // =========================
 
-  @ManyToOne(() => User, {
-    nullable: false,
-  })
+  @ManyToOne(() => User, { nullable: false })
   @JoinColumn({ name: 'dm_id' })
   dm!: User;
 
@@ -41,29 +40,34 @@ export class Table {
   // Game Info
   // =========================
 
-  @Column({
-    length: 100,
-  })
+  @Column({ length: 100 })
   title!: string;
 
   /**
    * System agnostic.
-   * Examples:
-   * D&D 5e
-   * Pathfinder 2e
-   * Call of Cthulhu
-   * Shadowdark
+   * Examples: D&D 5e, Pathfinder 2e, Call of Cthulhu, Shadowdark
    */
-  @Column({
-    length: 100,
-  })
+  @Column({ length: 100 })
   system!: string;
 
-  @Column({
-    type: 'text',
-    nullable: true,
-  })
-  description?: string;
+  /**
+   * Short pitch shown on the board / public cards. Public.
+   */
+  @Column({ length: 280 })
+  summary!: string;
+
+  /**
+   * Longer narrative blurb — setting, synopsis, tone, expanded pitch. Public.
+   */
+  @Column({ type: 'text', nullable: true })
+  details?: string;
+
+  /**
+   * Mechanical house rules. MEMBER-ONLY — surfaced only via the gated
+   * member-view endpoint, never on the public table detail.
+   */
+  @Column({ type: 'text', nullable: true })
+  houseRules?: string;
 
   @Column({
     type: 'enum',
@@ -72,23 +76,24 @@ export class Table {
   })
   tableType!: TableType;
 
+  @Column({
+    type: 'enum',
+    enum: ExperienceLevel,
+    default: ExperienceLevel.ALL,
+  })
+  experienceLevel!: ExperienceLevel;
+
   // =========================
   // Scheduling
   // =========================
 
-  @Column({
-    type: 'timestamp',
-  })
+  @Column({ type: 'timestamp' })
   scheduledAt!: Date;
 
-  @Column({
-    length: 100,
-  })
+  @Column({ length: 100 })
   timezone!: string;
 
-  @Column({
-    nullable: true,
-  })
+  @Column({ nullable: true })
   estimatedDurationHours?: number;
 
   @Column({
@@ -102,28 +107,27 @@ export class Table {
   // Logistics
   // =========================
 
-  @Column({
-    default: true,
-  })
+  @Column({ default: true })
   isOnline!: boolean;
 
   /**
-   * Discord, Roll20, Foundry,
-   * Local Game Store, etc.
+   * Discord, Roll20, Foundry, Local Game Store, etc.
    */
-  @Column({
-    length: 100,
-  })
+  @Column({ length: 100 })
   platform!: string;
 
   /**
-   * Optional physical location.
-   * Useful for in-person games.
+   * Session links — Discord invite, VTT room, notes, etc. MEMBER-ONLY.
+   * Plain text for now; jsonb ({ label, url }[]) is the upgrade path
+   * if you want typed/labeled links later.
    */
-  @Column({
-    nullable: true,
-    length: 150,
-  })
+  @Column({ type: 'text', nullable: true })
+  links?: string;
+
+  /**
+   * Optional physical location. Useful for in-person games.
+   */
+  @Column({ nullable: true, length: 150 })
   location?: string;
 
   @Column()
@@ -136,9 +140,7 @@ export class Table {
   // Settings
   // =========================
 
-  @Column({
-    default: false,
-  })
+  @Column({ default: false })
   autoAccept!: boolean;
 
   @Column({
@@ -164,11 +166,4 @@ export class Table {
 
   @UpdateDateColumn()
   updatedAt!: Date;
-
-  // =========================
-  // Future Relations
-  // =========================
-
-  // @OneToMany(() => Review, (review) => review.table)
-  // reviews!: Review[];
 }

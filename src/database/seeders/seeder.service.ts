@@ -12,10 +12,9 @@ import { TableStatus } from 'src/common/enums/table-status.enum';
 import { AgeRequirement } from 'src/common/enums/age-requirement.enum';
 import { Recurrence } from 'src/common/enums/recurrence.enum';
 import { MembershipStatus } from 'src/common/enums/membership-status.enum';
-import { SharedBadge } from 'src/common/enums/review-badge-shared.enum';
-import { PlayerBadge } from 'src/common/enums/review-badge-player.enum';
 import { hashPassword } from 'src/utils/hashing/bycryp.utils';
 import { ReviewType } from 'src/common/enums/review-type.enum';
+import { ExperienceLevel } from 'src/common/enums/experience-level.enum';
 
 @Injectable()
 export class SeederService {
@@ -124,10 +123,26 @@ export class SeederService {
       {
         title: 'The Sunken Crypt of Yth',
         system: 'D&D 5e',
-        description:
+        summary:
           'A weekly dungeon crawl campaign. Beginners welcome, voice required.',
+        details:
+          'Beneath the drowned city of Yth lies a labyrinth of flooded vaults and ' +
+          'barnacle-crusted halls, where a long-dead sorcerer-king still guards his ' +
+          'hoard. Expect tense exploration, environmental puzzles, and creeping dread ' +
+          'as the water rises. This is a story-forward campaign with room for character ' +
+          'arcs between delves — we play slow, we play scared, and we reward clever ' +
+          'thinking over brute force.',
+        houseRules:
+          'Rolling stats (4d6 drop lowest), no evil alignments. Inspiration is handed ' +
+          'out for good roleplay, not just clever tactics. Death saves are rolled in the ' +
+          'open — no fudging at this table. Flanking is NOT used (RAW only).',
+        links:
+          'Discord: https://discord.gg/example-yth\n' +
+          'Foundry: https://foundry.example.com/yth\n' +
+          'Session notes: https://notes.example.com/yth',
         tableType: TableType.CAMPAIGN,
         recurrence: Recurrence.WEEKLY,
+        experienceLevel: ExperienceLevel.BEGINNER_FRIENDLY,
         isOnline: true,
         platform: 'Discord + Foundry',
         seatsTotal: 5,
@@ -135,12 +150,26 @@ export class SeederService {
         ageRequirement: AgeRequirement.ADULTS_ONLY,
       },
       {
-        title: 'Curse of Strahd: Into Barovia',
+        title: 'Curse of Strahd: Into Barovia 🦇',
         system: 'D&D 5e',
-        description:
-          'Gothic horror campaign, experienced players preferred. Mature themes.',
+        summary:
+          'Gothic horror campaign, experienced players preferred. Mature themes. 🩸',
+        details:
+          'The mists of Barovia have claimed you. 🌫️ Trapped in a land ruled by the ' +
+          'vampire lord Strahd von Zarovich, your party must navigate a realm of dread, ' +
+          'tragedy, and gothic romance. Heavy roleplay, meaningful moral choices, and ' +
+          'a sandbox you can genuinely lose people in. Not for the faint of heart. ⚰️',
+        houseRules:
+          'Sanity-style stress mechanic in play (homebrew). 💀 No resurrection magic — ' +
+          'death is permanent here. Tarokka reading at session zero sets your fate. ' +
+          'PvP allowed but only with table consent.',
+        links:
+          'Discord: https://discord.gg/example-barovia\n' +
+          'Roll20: https://roll20.net/example/barovia\n' +
+          'Session 0 doc: https://docs.example.com/barovia-s0',
         tableType: TableType.CAMPAIGN,
         recurrence: Recurrence.BIWEEKLY,
+        experienceLevel: ExperienceLevel.EXPERIENCED,
         isOnline: true,
         platform: 'Roll20',
         seatsTotal: 6,
@@ -148,12 +177,24 @@ export class SeederService {
         ageRequirement: AgeRequirement.ALL_AGES,
       },
       {
-        title: "Pathfinder One-Shot: The Dragon's Hoard",
+        title: "Pathfinder One-Shot: The Dragon's Hoard 🐉",
         system: 'Pathfinder 2e',
-        description:
-          'Single session, drop-in friendly. Perfect for trying Pathfinder.',
+        summary:
+          'Single session, drop-in friendly. Perfect for trying Pathfinder. ✨',
+        details:
+          "A self-contained heist into a young dragon's lair. 💰 Pregens provided, so " +
+          'no prep needed — just bring curiosity and a sense of humor. Great for ' +
+          'first-timers who want to see what Pathfinder 2e plays like without committing ' +
+          'to a campaign. We explain rules as we go. 🎲',
+        houseRules:
+          'Pregenerated characters only (provided). Hero Points handed out generously ' +
+          'for fun plays. 🦸 Rules questions get a quick ruling now, lookup later.',
+        links:
+          'Foundry: https://foundry.example.com/dragons-hoard\n' +
+          'Pregens: https://pf2.example.com/pregens',
         tableType: TableType.ONE_SHOT,
         recurrence: Recurrence.NONE,
+        experienceLevel: ExperienceLevel.BEGINNER_FRIENDLY,
         isOnline: true,
         platform: 'Foundry VTT',
         seatsTotal: 4,
@@ -161,12 +202,24 @@ export class SeederService {
         ageRequirement: AgeRequirement.ALL_AGES,
       },
       {
-        title: 'Call of Cthulhu: The Haunting',
+        title: 'Call of Cthulhu: The Haunting 🐙',
         system: 'Call of Cthulhu 7e',
-        description:
-          'Classic investigative horror scenario. In-person, downtown game store.',
+        summary:
+          'Classic investigative horror scenario. In-person, downtown game store. 🔦',
+        details:
+          'A haunted house. A missing tenant. A mystery that should have stayed buried. ' +
+          '👁️ The Haunting is the quintessential CoC starter scenario — investigation, ' +
+          'creeping unease, and the very real possibility that knowledge will cost you. ' +
+          'Snacks provided, sanity not guaranteed. 🕯️',
+        houseRules:
+          'Pulp Cthulhu rules for slightly hardier investigators. 📜 Sanity loss is ' +
+          'real and tracked. Players encouraged to lean into doomed-investigator vibes.',
+        links:
+          "Venue: The Dragon's Den Game Store, Cra 7 #45-12, Bogotá\n" +
+          'Group chat: https://wa.me/example-cthulhu',
         tableType: TableType.ONE_SHOT,
         recurrence: Recurrence.NONE,
+        experienceLevel: ExperienceLevel.ALL,
         isOnline: false,
         platform: 'Local Game Store',
         location: 'Bogotá - Centro',
@@ -175,12 +228,24 @@ export class SeederService {
         ageRequirement: AgeRequirement.ADULTS_ONLY,
       },
       {
-        title: 'Mesa de Rol en Español: Aventuras Semanales',
+        title: 'Mesa de Rol en Español: Aventuras Semanales 🗡️',
         system: 'D&D 5e',
-        description:
-          'Campaña narrativa en español, todos los niveles bienvenidos.',
+        summary:
+          'Campaña narrativa en español, todos los niveles bienvenidos. 🎭',
+        details:
+          'Una campaña de fantasía clásica centrada en la historia y los personajes. ' +
+          '🏰 Exploramos mazmorras, intriga política y vínculos entre personajes. ' +
+          'Ambiente relajado y acogedor — perfecto para quienes quieren jugar en ' +
+          'español sin presión. ¡Nuevos jugadores siempre bienvenidos! 🌟',
+        houseRules:
+          'Inspiración por buen roleo. 🎲 Sin alineamientos malignos. Las decisiones ' +
+          'del grupo se toman en conjunto. Respeto y buena onda ante todo.',
+        links:
+          'Discord: https://discord.gg/example-espanol\n' +
+          'Notas: https://notas.example.com/aventuras',
         tableType: TableType.CAMPAIGN,
         recurrence: Recurrence.WEEKLY,
+        experienceLevel: ExperienceLevel.ALL,
         isOnline: true,
         platform: 'Discord',
         seatsTotal: 5,
@@ -188,12 +253,25 @@ export class SeederService {
         ageRequirement: AgeRequirement.ALL_AGES,
       },
       {
-        title: 'Shadowdark Monthly Delve',
+        title: 'Shadowdark Monthly Delve ⚔️',
         system: 'Shadowdark',
-        description:
-          'Old-school dungeon crawling, monthly sessions. Lethal and fun.',
+        summary:
+          'Old-school dungeon crawling, monthly sessions. Lethal and fun. 💀',
+        details:
+          'Torches burn in real time. ⏳ The dark is hungry. Shadowdark strips D&D back ' +
+          'to its OSR roots — resource management, deadly traps, and characters who die ' +
+          "fast and are replaced faster. Bring three character ideas, you'll need them. " +
+          'High lethality, high fun, zero hand-holding. 🔥',
+        houseRules:
+          'Roll-up-and-go character creation at the table. 🎲 Death is common and ' +
+          'expected — keep a backup ready. Real-time torch tracking is strictly enforced. ' +
+          'Treasure = XP, so steal everything. 💎',
+        links:
+          'Discord: https://discord.gg/example-shadowdark\n' +
+          'Owlbear Rodeo: https://owlbear.rodeo/example',
         tableType: TableType.CAMPAIGN,
         recurrence: Recurrence.MONTHLY,
+        experienceLevel: ExperienceLevel.EXPERIENCED,
         isOnline: true,
         platform: 'Discord + Owlbear Rodeo',
         seatsTotal: 6,

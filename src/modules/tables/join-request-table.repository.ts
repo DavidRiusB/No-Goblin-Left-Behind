@@ -56,6 +56,7 @@ export class JoinRequestRepository {
       order: { createdAt: 'DESC' },
     });
   }
+
   async findPendingByTable(
     tableId: string,
     manager?: EntityManager,
