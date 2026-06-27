@@ -177,8 +177,7 @@ export class TablesService {
     const base = await this.buildTableDetailResponse(table);
     return {
       ...base,
-      // FUTURE: private member-only fields spread in here, e.g.
-      // sessionLinks: table.sessionLinks, houseRules: table.houseRules,
+      links: table.links,
     };
   }
 
