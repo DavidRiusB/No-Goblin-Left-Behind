@@ -9,14 +9,14 @@ export class TableUserResponse {
   @Expose() reviewCount!: number;
 }
 
-export class TableMemberDetailResponse {
+// PUBLIC — no links. the base shape.
+export class TableDetailResponse {
   @Expose() id!: string;
   @Expose() title!: string;
   @Expose() system!: string;
   @Expose() summary!: string;
   @Expose() details!: string | null;
   @Expose() houseRules!: string | null;
-  @Expose() links!: string | null;
   @Expose() tableType!: string;
   @Expose() experienceLevel!: string;
   @Expose() recurrence!: string;
@@ -38,4 +38,9 @@ export class TableMemberDetailResponse {
   @Expose()
   @Type(() => TableUserResponse)
   players!: TableUserResponse[];
+}
+
+// MEMBER — everything public + the one private field.
+export class TableMemberDetailResponse extends TableDetailResponse {
+  @Expose() links!: string | null;
 }

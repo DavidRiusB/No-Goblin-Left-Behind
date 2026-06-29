@@ -21,7 +21,10 @@ import { User } from '../users/entity/user.entity';
 import { UpdateTableDto } from './dtos/update-table.dto';
 import { CreateJoinRequestDto } from './dtos/create-join-request.dto';
 import { UpdateJoinRequestDto } from './dtos/update-join-request.dto';
-import { TableMemberDetailResponse } from './dtos/table-detail.response';
+import {
+  TableDetailResponse,
+  TableMemberDetailResponse,
+} from './dtos/table-detail.response';
 import { plainToInstance } from 'class-transformer';
 
 @Controller('tables')
@@ -95,7 +98,10 @@ export class TablesController {
 
   @Get(':id')
   async getTableDetail(@Param('id', ParseUUIDPipe) id: string) {
-    return this.tablesService.getTableDetail(id);
+    const data = this.tablesService.getTableDetail(id);
+    return plainToInstance(TableDetailResponse, data, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Post()
