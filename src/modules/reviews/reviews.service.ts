@@ -23,6 +23,10 @@ export class ReviewsService {
     private readonly tablesRepository: TableRepository,
   ) {}
 
+  async getReceivedByUser(userId: string) {
+    return this.reviewRepository.findReceivedByUser(userId);
+  }
+
   async create(
     tableId: string,
     dto: CreateReviewDto,

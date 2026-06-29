@@ -26,6 +26,8 @@ import {
   TableMemberDetailResponse,
 } from './dtos/table-detail.response';
 import { plainToInstance } from 'class-transformer';
+import { UserProfileResponse } from '../users/dtos/user-profile-response.dto';
+import { TableManagementResponse } from './dtos/management-table-response.dto';
 
 @Controller('tables')
 export class TablesController {
@@ -54,27 +56,21 @@ export class TablesController {
     });
   }
 
-  // table player detail? whats the difrence with the end point in top
-  // misleading name
-  // dosnet return table, checks only if playes is in table ???
-  // is a bad version of   @Get(':id/connections/:userId') only checks active tables
   @Get(':id/players/:playerId')
   @UseGuards(JwtAuthGuard)
   async getPlayerDetail(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Param('playerId', ParseUUIDPipe) playerId: string,
-    @CurrentUser() requester: JwtUser,
+    @Param('id', ParseUUIDPipe) id,
+    @Param('playerId', ParseUUIDPipe) playerId,
+    @CurrentUser() requester,
   ) {
-    return this.tablesService.getTablePlayerDetail(id, playerId, requester);
-  }
-
-  @Get(':id/requests')
-  @UseGuards(JwtAuthGuard)
-  async getTableRequests(
-    @Param('id', ParseUUIDPipe) tableId: string,
-    @CurrentUser() requester: JwtUser,
-  ) {
-    return this.tablesService.getTableRequests(tableId, requester);
+    const data = await this.tablesService.getTablePlayerDetail(
+      id,
+      playerId,
+      requester,
+    );
+    return plainToInstance(UserProfileResponse, data, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Get(':id/connections/:userId')
@@ -84,16 +80,22 @@ export class TablesController {
     @Param('userId', ParseUUIDPipe) userId: string,
     @CurrentUser() requester: JwtUser,
   ) {
-    return this.tablesService.getConnectionProfile(id, userId, requester);
+    const data = this.tablesService.getConnectionProfile(id, userId, requester);
+    return plainToInstance(UserProfileResponse, data, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Get(':id/manage')
   @UseGuards(JwtAuthGuard)
   async getTableManagement(
-    @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() requester: JwtUser,
+    @Param('id', ParseUUIDPipe) id,
+    @CurrentUser() requester,
   ) {
-    return this.tablesService.getTableManagement(id, requester);
+    const data = await this.tablesService.getTableManagement(id, requester);
+    return plainToInstance(TableManagementResponse, data, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Get(':id')
