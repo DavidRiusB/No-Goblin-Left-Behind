@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Query,
+  SerializeOptions,
   UseGuards,
 } from '@nestjs/common';
 import { TablesService } from './tables.service';
@@ -20,6 +21,8 @@ import { User } from '../users/entity/user.entity';
 import { UpdateTableDto } from './dtos/update-table.dto';
 import { CreateJoinRequestDto } from './dtos/create-join-request.dto';
 import { UpdateJoinRequestDto } from './dtos/update-join-request.dto';
+import { TableMemberDetailResponse } from './dtos/table-detail.response';
+import { plainToInstance } from 'class-transformer';
 
 @Controller('tables')
 export class TablesController {
@@ -42,9 +45,16 @@ export class TablesController {
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() requester: JwtUser,
   ) {
-    return this.tablesService.getTableMemberDetail(id, requester);
+    const data = await this.tablesService.getTableForMember(id, requester);
+    return plainToInstance(TableMemberDetailResponse, data, {
+      excludeExtraneousValues: true,
+    });
   }
 
+  // table player detail? whats the difrence with the end point in top
+  // misleading name
+  // dosnet return table, checks only if playes is in table ???
+  // is a bad version of   @Get(':id/connections/:userId') only checks active tables
   @Get(':id/players/:playerId')
   @UseGuards(JwtAuthGuard)
   async getPlayerDetail(
@@ -63,6 +73,7 @@ export class TablesController {
   ) {
     return this.tablesService.getTableRequests(tableId, requester);
   }
+
   @Get(':id/connections/:userId')
   @UseGuards(JwtAuthGuard)
   async getConnectionProfile(

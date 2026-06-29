@@ -129,4 +129,27 @@ export class ReviewsService {
 
     await this.reviewRepository.softDelete(id);
   }
+
+  async getBadgeSummaries(userIds: string[]) {
+    const reviews = await this.reviewRepository.findReceivedByUsers(userIds);
+
+    const summaryByUser = new Map<
+      string,
+      { badges: Record<string, number>; reviewCount: number }
+    >();
+
+    for (const id of userIds) {
+      summaryByUser.set(id, { badges: {}, reviewCount: 0 });
+    }
+    for (const review of reviews) {
+      const entry = summaryByUser.get(review.targetUser.id);
+      if (!entry) continue;
+      entry.reviewCount += 1;
+      for (const badge of review.badges) {
+        entry.badges[badge] = (entry.badges[badge] ?? 0) + 1;
+      }
+    }
+
+    return summaryByUser;
+  }
 }

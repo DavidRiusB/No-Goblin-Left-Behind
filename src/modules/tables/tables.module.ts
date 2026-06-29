@@ -12,6 +12,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { ChatModule } from '../chat/chat.module';
 import { ReviewRepository } from '../reviews/review.repository';
 import { Review } from '../reviews/entity/review.entity';
+import { ReviewsService } from '../reviews/reviews.service';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { Review } from '../reviews/entity/review.entity';
     JoinRequestRepository,
     TableMembershipRepository,
     ReviewRepository,
+    ReviewsService,
   ],
   controllers: [TablesController],
 })

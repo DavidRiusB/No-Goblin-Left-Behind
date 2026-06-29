@@ -27,6 +27,7 @@ import { ConversationService } from '../chat/conversation.service';
 import { ReviewRepository } from '../reviews/review.repository';
 import { Role } from 'src/common/enums/roles.enum';
 import { Review } from '../reviews/entity/review.entity';
+import { ReviewsService } from '../reviews/reviews.service';
 
 type UserSummary = { badges: Record<string, number>; reviewCount: number };
 @Injectable()
@@ -38,8 +39,28 @@ export class TablesService {
     private readonly notificationsService: NotificationsService,
     private readonly conversationService: ConversationService,
     private readonly reviewRepository: ReviewRepository,
+    private readonly reviewsService: ReviewsService,
     private readonly dataSource: DataSource,
   ) {}
+
+  // takes a table's dm + active members, returns them with badge counts attached.
+  // no response shaping — just enriching users with their summary.
+  private async attachBadgeSummaries(table: Table) {
+    const memberUsers = table.memberships
+      .filter((m) => m.status === MembershipStatus.ACTIVE)
+      .map((m) => m.user);
+    const allUsers = [table.dm, ...memberUsers];
+    const userIds = allUsers.map((u) => u.id);
+
+    const summaries = await this.reviewsService.getBadgeSummaries(userIds);
+
+    const withBadges = (u: User) => ({ ...u, ...summaries.get(u.id)! });
+
+    return {
+      dm: withBadges(table.dm),
+      players: memberUsers.map(withBadges),
+    };
+  }
 
   // shapes a user's full profile + attributed reviews. pure shaping —
   // no access logic. callers do their own gating, then call this.
@@ -88,10 +109,65 @@ export class TablesService {
     return this.tableRepository.findWithFilters(filters);
   }
 
+  async getMyTables(requester: JwtUser): Promise<{
+    dmTables: Table[];
+    memberships: TableMembership[];
+    joinRequests: JoinRequest[];
+  }> {
+    const [dmTables, memberships, joinRequests] = await Promise.all([
+      this.tableRepository.findByDm(requester.userId),
+      this.membershipRepository.findByUser(requester.userId),
+      this.joinRequestRepository.findByUser(requester.userId),
+    ]);
+
+    return { dmTables, memberships, joinRequests };
+  }
+
   async findById(id: string): Promise<Table> {
     const table = await this.tableRepository.findById(id);
     if (!table) throw new NotFoundException('Table not found');
     return table;
+  }
+
+  async create(data: CreateTableDto, dm: User): Promise<Table> {
+    return this.tableRepository.create(data, dm);
+  }
+
+  async requestToJoin(
+    tableId: string,
+    requester: JwtUser,
+    data: CreateJoinRequestDto,
+  ): Promise<JoinRequest> {
+    const table = await this.findById(tableId);
+
+    const existing = await this.joinRequestRepository.findExisting(
+      requester.userId,
+      tableId,
+    );
+
+    if (existing) {
+      throw new BadRequestException(
+        'You already have an active request for this table',
+      );
+    }
+
+    const request = await this.joinRequestRepository.create({
+      userId: requester.userId,
+      tableId,
+      message: data.message,
+    });
+
+    await this.notificationsService.notify(
+      table.dm.id,
+      NotificationType.REQUEST_RECEIVED,
+      { tableId, tableTitle: table.title, requesterId: requester.userId },
+    );
+    await this.conversationService.openConversation(
+      requester.userId,
+      table.dm.id,
+    );
+
+    return request;
   }
 
   // ── shared display builder ─────────────────────────────────────────
@@ -164,20 +240,17 @@ export class TablesService {
     return this.buildTableDetailResponse(table);
   }
 
-  // ── member-gated detail ────────────────────────────────────────────
-  // DM, active members, or admins only. THIS is where future private
-  // member-only fields (session links, house rules, discord invite, etc.)
-  // get added — never on getTableDetail above.
-  async getTableMemberDetail(id: string, requester: JwtUser) {
+  async getTableForMember(id: string, requester: JwtUser) {
     const table = await this.tableRepository.findByIdWithMembers(id);
     if (!table) throw new NotFoundException('Table not found');
 
     this.assertTableMember(table, requester);
 
-    const base = await this.buildTableDetailResponse(table);
+    const { dm, players } = await this.attachBadgeSummaries(table);
     return {
-      ...base,
-      links: table.links,
+      ...table, // all table fields, incl raw dm + memberships
+      dm, // overrides table.dm with the badge-enriched dm
+      players, // adds players (the enriched active members)
     };
   }
 
@@ -256,10 +329,6 @@ export class TablesService {
     return this.buildUserProfileResponse(targetUser, reviews);
   }
 
-  async create(data: CreateTableDto, dm: User): Promise<Table> {
-    return this.tableRepository.create(data, dm);
-  }
-
   async update(
     id: string,
     data: UpdateTableDto,
@@ -275,43 +344,6 @@ export class TablesService {
     const table = await this.findById(id);
     assertSelfOrAdmin(requester.userId, table.dm.id, requester.role);
     await this.tableRepository.softDelete(id);
-  }
-
-  async requestToJoin(
-    tableId: string,
-    requester: JwtUser,
-    data: CreateJoinRequestDto,
-  ): Promise<JoinRequest> {
-    const table = await this.findById(tableId);
-
-    const existing = await this.joinRequestRepository.findExisting(
-      requester.userId,
-      tableId,
-    );
-
-    if (existing) {
-      throw new BadRequestException(
-        'You already have an active request for this table',
-      );
-    }
-
-    const request = await this.joinRequestRepository.create({
-      userId: requester.userId,
-      tableId,
-      message: data.message,
-    });
-
-    await this.notificationsService.notify(
-      table.dm.id,
-      NotificationType.REQUEST_RECEIVED,
-      { tableId, tableTitle: table.title, requesterId: requester.userId },
-    );
-    await this.conversationService.openConversation(
-      requester.userId,
-      table.dm.id,
-    );
-
-    return request;
   }
 
   async updateJoinRequest(
@@ -421,20 +453,6 @@ export class TablesService {
       membership,
       MembershipStatus.KICKED,
     );
-  }
-
-  async getMyTables(requester: JwtUser): Promise<{
-    dmTables: Table[];
-    memberships: TableMembership[];
-    joinRequests: JoinRequest[];
-  }> {
-    const [dmTables, memberships, joinRequests] = await Promise.all([
-      this.tableRepository.findByDm(requester.userId),
-      this.membershipRepository.findByUser(requester.userId),
-      this.joinRequestRepository.findByUser(requester.userId),
-    ]);
-
-    return { dmTables, memberships, joinRequests };
   }
 
   async getTableRequests(tableId: string, requester: JwtUser) {
