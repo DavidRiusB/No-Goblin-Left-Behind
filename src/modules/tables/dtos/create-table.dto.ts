@@ -1,17 +1,18 @@
-import { Type } from 'class-transformer';
 import {
-  IsBoolean,
-  IsDate,
-  IsEnum,
-  IsInt,
-  IsOptional,
   IsString,
-  MaxLength,
+  IsOptional,
+  IsEnum,
+  IsDate,
+  IsInt,
+  IsBoolean,
   Min,
+  MaxLength,
 } from 'class-validator';
-import { AgeRequirement } from 'src/common/enums/age-requirement.enum';
-import { Recurrence } from 'src/common/enums/recurrence.enum';
+import { Type } from 'class-transformer';
 import { TableType } from 'src/common/enums/table-type.enum';
+import { Recurrence } from 'src/common/enums/recurrence.enum';
+import { AgeRequirement } from 'src/common/enums/age-requirement.enum';
+import { ExperienceLevel } from 'src/common/enums/experience-level.enum';
 
 export class CreateTableDto {
   @IsString({ message: 'Title must be a string' })
@@ -22,12 +23,31 @@ export class CreateTableDto {
   @MaxLength(100, { message: 'System cannot exceed 100 characters' })
   system!: string;
 
+  // summary — required, the public pitch (matches entity: required, 280)
+  @IsString({ message: 'Summary must be a string' })
+  @MaxLength(280, { message: 'Summary cannot exceed 280 characters' })
+  summary!: string;
+
+  // details — optional public narrative
   @IsOptional()
-  @IsString({ message: 'Description must be a string' })
-  description?: string;
+  @IsString({ message: 'Details must be a string' })
+  details?: string;
+
+  // houseRules — optional, public (table meta)
+  @IsOptional()
+  @IsString({ message: 'House rules must be a string' })
+  houseRules?: string;
+
+  // links — optional, member-only
+  @IsOptional()
+  @IsString({ message: 'Links must be a string' })
+  links?: string;
 
   @IsEnum(TableType, { message: 'Invalid table type' })
   tableType!: TableType;
+
+  @IsEnum(ExperienceLevel, { message: 'Invalid experience level' })
+  experienceLevel!: ExperienceLevel;
 
   @IsEnum(Recurrence, { message: 'Invalid recurrence' })
   recurrence!: Recurrence;
