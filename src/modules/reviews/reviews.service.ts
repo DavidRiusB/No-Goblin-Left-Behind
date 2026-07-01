@@ -14,6 +14,7 @@ import { assertSelfOrAdmin } from 'src/common/helpers/assert-self-or-admin.helpe
 import { ReviewType } from 'src/common/enums/review-type.enum';
 import { allowedBadgesForType } from 'src/common/badges';
 import { TableRepository } from '../tables/table.repository';
+import { BadgesService } from '../badges/badges.service';
 
 const MAX_BADGES = 3; // tunable; later a subscriber perk could raise this
 @Injectable()
@@ -21,6 +22,7 @@ export class ReviewsService {
   constructor(
     private readonly reviewRepository: ReviewRepository,
     private readonly tablesRepository: TableRepository,
+    private readonly badgesService: BadgesService,
   ) {}
 
   async getReceivedByUser(userId: string) {
@@ -36,16 +38,12 @@ export class ReviewsService {
       throw new BadRequestException('You cannot review yourself');
     }
 
-    // ONE fetch — table + dm + all members. everything we need.
     const table = await this.tablesRepository.findByIdWithMembers(tableId);
     if (!table) throw new NotFoundException('Table not found');
 
-    // derive type from target's role at this table
     const targetIsDm = table.dm.id === dto.targetUserId;
     const type = targetIsDm ? ReviewType.DM : ReviewType.PLAYER;
 
-    // both parties must be in the table — now just in-memory checks, no queries.
-    // "in the table" = is the DM, or has a membership (any status — they shared it).
     const memberIds = new Set(table.memberships.map((m) => m.user.id));
     const isInTable = (userId: string) =>
       userId === table.dm.id || memberIds.has(userId);
@@ -54,27 +52,12 @@ export class ReviewsService {
       throw new BadRequestException('Both users must have shared this table');
     }
 
-    // validate badges against what this review type allows
-    const badges = dto.badges ?? [];
-
-    if (badges.length > MAX_BADGES) {
-      throw new BadRequestException(
-        `A review can have at most ${MAX_BADGES} badges`,
-      );
-    }
-
-    // no duplicate badges within one review
-    if (new Set(badges).size !== badges.length) {
-      throw new BadRequestException('Duplicate badges are not allowed');
-    }
-
-    const allowed = allowedBadgesForType(type);
-    const invalid = badges.filter((b) => !allowed.includes(b));
-    if (invalid.length > 0) {
-      throw new BadRequestException(
-        `Invalid badges for a ${type} review: ${invalid.join(', ')}`,
-      );
-    }
+    // resolve + validate badge codes against the badge TABLE (replaces the
+    // old code-catalog checks: existence, active, dupes, max, allowed-for-type)
+    const badgeEntities = await this.badgesService.resolveForReview(
+      dto.badges ?? [],
+      type,
+    );
 
     // one review per reviewer/target/table
     const existing = await this.reviewRepository.findExisting(
@@ -93,7 +76,7 @@ export class ReviewsService {
       targetUserId: dto.targetUserId,
       tableId,
       type,
-      badges,
+      badges: badgeEntities, // ← Badge[] entities now, not string codes
       writtenReview: dto.writtenReview,
     });
   }
@@ -150,7 +133,7 @@ export class ReviewsService {
       if (!entry) continue;
       entry.reviewCount += 1;
       for (const badge of review.badges) {
-        entry.badges[badge] = (entry.badges[badge] ?? 0) + 1;
+        entry.badges[badge.code] = (entry.badges[badge.code] ?? 0) + 1;
       }
     }
 

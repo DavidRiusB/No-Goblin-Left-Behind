@@ -114,7 +114,7 @@ export class Table {
    * Discord, Roll20, Foundry, Local Game Store, etc.
    */
   @Column({ length: 100, nullable: true })
-  platform!: string;
+  platform?: string;
 
   /**
    * Session links — Discord invite, VTT room, notes, etc. MEMBER-ONLY.

@@ -1,10 +1,15 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, In, Repository } from 'typeorm';
 import { Table } from 'src/modules/tables/entities/table.entity';
 import { User } from 'src/modules/users/entity/user.entity';
 import { Review } from './entity/review.entity';
 import { ReviewType } from 'src/common/enums/review-type.enum';
+import { Badge } from '../badges/entity/badge.entity';
 
 @Injectable()
 export class ReviewRepository {
@@ -37,7 +42,7 @@ export class ReviewRepository {
       targetUserId: string;
       tableId: string;
       type: ReviewType;
-      badges: string[];
+      badges: Badge[]; // ← now entities, resolved+validated by caller
       writtenReview?: string;
     },
     manager?: EntityManager,
@@ -46,16 +51,16 @@ export class ReviewRepository {
     try {
       const review = repo.create({
         reviewer: { id: data.reviewerId } as User,
-        targetUser: { id: data.targetUserId } as User, // wait — see note
+        targetUser: { id: data.targetUserId } as User,
         table: { id: data.tableId } as Table,
         type: data.type,
-        badges: data.badges,
+        badges: data.badges, // ← Badge[] entities, M2M saves the join rows
         writtenReview: data.writtenReview,
       });
       return await repo.save(review);
     } catch (error: any) {
       if (error.code === '23505') {
-        throw new InternalServerErrorException(
+        throw new BadRequestException(
           'You have already reviewed this user for this table',
         );
       }
@@ -76,7 +81,7 @@ export class ReviewRepository {
     if (userIds.length === 0) return [];
     return this.reviewRepository.find({
       where: { targetUser: { id: In(userIds) } },
-      relations: { targetUser: true },
+      relations: { targetUser: true, badges: true },
     });
   }
 

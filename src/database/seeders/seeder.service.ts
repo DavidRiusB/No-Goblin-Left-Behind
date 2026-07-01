@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { User } from 'src/modules/users/entity/user.entity';
 import { Credential } from 'src/modules/auth/entity/auth.entity';
 import { Table } from 'src/modules/tables/entities/table.entity';
@@ -15,6 +15,7 @@ import { MembershipStatus } from 'src/common/enums/membership-status.enum';
 import { hashPassword } from 'src/utils/hashing/bycryp.utils';
 import { ReviewType } from 'src/common/enums/review-type.enum';
 import { ExperienceLevel } from 'src/common/enums/experience-level.enum';
+import { Badge } from 'src/modules/badges/entity/badge.entity';
 
 @Injectable()
 export class SeederService {
@@ -324,12 +325,58 @@ export class SeederService {
     this.logger.log(`Created membership ${user.username}@${table.title}`);
   }
 
+  private async seedBadges(): Promise<void> {
+    const repo = this.dataSource.getRepository(Badge);
+
+    const badges = [
+      {
+        code: 'FRIENDLY',
+        label: 'Friendly',
+        icon: '😊',
+        category: 'vibe',
+        description: '...',
+      }, // no appliesTo = general
+      {
+        code: 'RELIABLE',
+        label: 'Reliable',
+        icon: '⏰',
+        category: 'reliability',
+        description: '...',
+      },
+      {
+        code: 'TEAM_PLAYER',
+        label: 'Team Player',
+        icon: '🤝',
+        category: 'teamwork',
+        appliesTo: ReviewType.PLAYER,
+        description: '...',
+      },
+      {
+        code: 'WELL_PREPARED',
+        label: 'Well Prepared',
+        icon: '📚',
+        category: 'dm-craft',
+        appliesTo: ReviewType.DM,
+        description: '...',
+      },
+    ];
+
+    for (const b of badges) {
+      const existing = await repo.findOne({ where: { code: b.code } });
+      if (existing) continue; // idempotent — skip existing
+      await repo.save(repo.create(b));
+    }
+    this.logger.log('Seeded badges');
+  }
+
   private async seedReview(
     reviewer: User,
     target: User,
     table: Table,
   ): Promise<void> {
     const repo = this.dataSource.getRepository(Review);
+    const badgeRepo = this.dataSource.getRepository(Badge);
+
     const existing = await repo.findOne({
       where: {
         reviewer: { id: reviewer.id },
@@ -341,13 +388,19 @@ export class SeederService {
       this.logger.log('Seed review exists, skipping');
       return;
     }
+
+    // resolve codes -> Badge entities (the catalog must be seeded first)
+    const badges = await badgeRepo.find({
+      where: { code: In(['FRIENDLY', 'RELIABLE']) },
+    });
+
     await repo.save(
       repo.create({
         type: ReviewType.PLAYER,
         reviewer,
         targetUser: target,
         table,
-        badges: ['FRIENDLY', 'RELIABLE'],
+        badges, // ← Badge[] entities, M2M writes join rows
         writtenReview:
           'Bob brought great energy and stayed in character all night.',
       }),

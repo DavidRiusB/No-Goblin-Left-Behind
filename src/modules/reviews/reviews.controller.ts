@@ -16,10 +16,21 @@ import { UpdateReviewDto } from './dtos/update-review.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { JwtUser } from 'src/common/types/jwt-user.type';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth-guard';
+import { plainToInstance } from 'class-transformer';
+import { ReviewResponse } from '../users/dtos/user-profile-response.dto';
 
-@Controller()
+@Controller('reviews')
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  async getMyReviews(@CurrentUser() user: JwtUser) {
+    const reviews = await this.reviewsService.getReceivedByUser(user.userId);
+    return plainToInstance(ReviewResponse, reviews, {
+      excludeExtraneousValues: true,
+    });
+  }
 
   @Post('tables/:id/reviews')
   @UseGuards(JwtAuthGuard)

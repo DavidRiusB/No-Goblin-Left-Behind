@@ -13,12 +13,14 @@ import { ChatModule } from '../chat/chat.module';
 import { ReviewRepository } from '../reviews/review.repository';
 import { Review } from '../reviews/entity/review.entity';
 import { ReviewsService } from '../reviews/reviews.service';
+import { BadgesModule } from '../badges/badges.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Table, JoinRequest, TableMembership, Review]),
     NotificationsModule,
     ChatModule,
+    BadgesModule,
   ],
   providers: [
     TablesService,

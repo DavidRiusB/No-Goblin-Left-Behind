@@ -7,7 +7,7 @@ class ReviewerResponse {
   @Expose() avatarUrl!: string | null;
 }
 
-class ReviewResponse {
+export class ReviewResponse {
   @Expose() id!: string;
   @Expose() type!: string;
   @Expose() badges!: string[];
@@ -27,6 +27,7 @@ export class UserProfileResponse {
   @Expose() bio!: string | null;
   @Expose() preferredSystems!: string[];
   @Expose() playStyleTags!: string[];
+  @Expose() timezone!: string | null;
 
   @Expose()
   @Type(() => ReviewResponse)

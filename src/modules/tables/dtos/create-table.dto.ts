@@ -70,7 +70,7 @@ export class CreateTableDto {
 
   @IsString({ message: 'Platform must be a string' })
   @MaxLength(100, { message: 'Platform cannot exceed 100 characters' })
-  platform!: string;
+  platform?: string;
 
   @IsOptional()
   @IsString({ message: 'Location must be a string' })

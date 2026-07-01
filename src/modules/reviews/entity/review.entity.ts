@@ -1,5 +1,6 @@
 // review.entity.ts — the changed bits
 import { ReviewType } from 'src/common/enums/review-type.enum';
+import { Badge } from 'src/modules/badges/entity/badge.entity';
 import { Table } from 'src/modules/tables/entities/table.entity';
 import { User } from 'src/modules/users/entity/user.entity';
 import {
@@ -8,6 +9,8 @@ import {
   DeleteDateColumn,
   Entity,
   JoinColumn,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   PrimaryGeneratedColumn,
   Unique,
@@ -38,12 +41,11 @@ export class Review {
   })
   type!: ReviewType;
 
-  @Column({
-    type: 'text',
-    array: true,
-    default: [],
+  @ManyToMany(() => Badge)
+  @JoinTable({
+    name: 'review_badges',
   })
-  badges!: string[];
+  badges!: Badge[];
 
   @Column({ type: 'text', nullable: true })
   writtenReview?: string;
