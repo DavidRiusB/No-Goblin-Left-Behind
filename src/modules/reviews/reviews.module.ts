@@ -14,10 +14,10 @@ import { BadgesService } from '../badges/badges.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Review, Table, TableMembership]), // entities only
-    BadgesModule, // ← module goes in imports, at the module level
+    TypeOrmModule.forFeature([Review, Table, TableMembership]),
+    BadgesModule,
   ],
-  providers: [ReviewsService, ReviewRepository, TableRepository], // drop BadgesService
+  providers: [ReviewsService, ReviewRepository, TableRepository],
   controllers: [ReviewsController],
 })
 export class ReviewsModule {}

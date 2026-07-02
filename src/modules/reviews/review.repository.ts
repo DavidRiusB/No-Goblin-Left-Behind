@@ -71,7 +71,7 @@ export class ReviewRepository {
   async findReceivedByUser(userId: string): Promise<Review[]> {
     return this.reviewRepository.find({
       where: { targetUser: { id: userId } },
-      relations: { reviewer: true, table: true },
+      relations: { reviewer: true, table: true, badges: true },
       order: { createdAt: 'DESC' },
     });
   }

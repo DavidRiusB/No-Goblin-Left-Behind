@@ -67,6 +67,8 @@ export class SeederService {
       return;
     }
 
+    await this.seedBadges();
+
     // 2. tables (returns the ones created/found so we can reference them)
     const tables = await this.seedTables(dm);
 
