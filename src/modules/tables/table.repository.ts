@@ -106,6 +106,11 @@ export class TableRepository {
         recurrence: filters.recurrence,
       });
     }
+    if (filters.experienceLevel) {
+      query.andWhere('table.experienceLevel =:experienceLevel ', {
+        experienceLevel: filters.experienceLevel,
+      });
+    }
 
     query
       .orderBy('table.scheduledAt', 'ASC')

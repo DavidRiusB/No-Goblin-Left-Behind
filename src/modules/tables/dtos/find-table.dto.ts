@@ -10,6 +10,7 @@ import {
   Min,
 } from 'class-validator';
 import { AgeRequirement } from 'src/common/enums/age-requirement.enum';
+import { ExperienceLevel } from 'src/common/enums/experience-level.enum';
 import { Recurrence } from 'src/common/enums/recurrence.enum';
 import { TableType } from 'src/common/enums/table-type.enum';
 
@@ -55,6 +56,10 @@ export class FindTablesDto {
   @IsOptional()
   @IsEnum(Recurrence)
   recurrence?: Recurrence;
+
+  @IsOptional()
+  @IsEnum(ExperienceLevel)
+  experienceLevel?: ExperienceLevel;
 
   @IsOptional()
   @Type(() => Number)
