@@ -16,4 +16,11 @@ export class BadgesRepository {
       where: { code: In(codes), isActive: true },
     });
   }
+
+  async findAllActive(): Promise<Badge[]> {
+    return this.badgeRepository.find({
+      where: { isActive: true },
+      order: { category: 'ASC', sortOrder: 'ASC' },
+    });
+  }
 }

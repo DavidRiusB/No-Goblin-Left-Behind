@@ -30,6 +30,7 @@ export class UserProfileResponse {
   @Expose() preferredSystems!: string[];
   @Expose() playStyleTags!: string[];
   @Expose() timezone!: string | null;
+  @Expose() isDm!: boolean;
 
   @Expose()
   @Type(() => ReviewResponse)

@@ -3,6 +3,7 @@ import { BadgesRepository } from './badge.repository';
 import { ReviewType } from 'src/common/enums/review-type.enum';
 import { Badge } from './entity/badge.entity';
 
+const MAX_BADGES = 3; // tunable; later a subscriber perk could raise this
 @Injectable()
 export class BadgesService {
   constructor(private readonly badgeRepository: BadgesRepository) {}
@@ -14,7 +15,7 @@ export class BadgesService {
     if (unique.length === 0) {
       throw new BadRequestException('At least one badge is required');
     }
-    if (unique.length > 3) {
+    if (unique.length > MAX_BADGES) {
       throw new BadRequestException('A review can have at most 3 badges');
     }
 
@@ -36,5 +37,9 @@ export class BadgesService {
     }
 
     return badges;
+  }
+
+  async getAllActive(): Promise<Badge[]> {
+    return this.badgeRepository.findAllActive();
   }
 }

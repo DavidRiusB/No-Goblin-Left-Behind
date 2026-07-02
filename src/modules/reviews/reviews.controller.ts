@@ -32,14 +32,15 @@ export class ReviewsController {
     });
   }
 
-  @Post('tables/:id/reviews')
+  @Post('tables/:tableId')
   @UseGuards(JwtAuthGuard)
   async create(
-    @Param('id', ParseUUIDPipe) tableId: string,
+    @Param('tableId', ParseUUIDPipe) tableId: string,
     @Body() dto: CreateReviewDto,
     @CurrentUser() reviewer: JwtUser,
   ) {
-    return this.reviewsService.create(tableId, dto, reviewer);
+    await this.reviewsService.create(tableId, dto, reviewer);
+    return { success: true };
   }
 
   @Patch('reviews/:id')

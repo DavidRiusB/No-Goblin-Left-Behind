@@ -16,7 +16,9 @@ import { allowedBadgesForType } from 'src/common/badges';
 import { TableRepository } from '../tables/table.repository';
 import { BadgesService } from '../badges/badges.service';
 
-const MAX_BADGES = 3; // tunable; later a subscriber perk could raise this
+const FUNNY_DEFAULT =
+  'Wow… this person was too lazy to write something nice about you 😴';
+
 @Injectable()
 export class ReviewsService {
   constructor(
@@ -52,8 +54,6 @@ export class ReviewsService {
       throw new BadRequestException('Both users must have shared this table');
     }
 
-    // resolve + validate badge codes against the badge TABLE (replaces the
-    // old code-catalog checks: existence, active, dupes, max, allowed-for-type)
     const badgeEntities = await this.badgesService.resolveForReview(
       dto.badges ?? [],
       type,
@@ -76,8 +76,8 @@ export class ReviewsService {
       targetUserId: dto.targetUserId,
       tableId,
       type,
-      badges: badgeEntities, // ← Badge[] entities now, not string codes
-      writtenReview: dto.writtenReview,
+      badges: badgeEntities,
+      writtenReview: dto.writtenReview?.trim() || FUNNY_DEFAULT,
     });
   }
 

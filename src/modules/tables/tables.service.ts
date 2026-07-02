@@ -188,7 +188,7 @@ export class TablesService {
 
     const reviews = await this.reviewsService.getReceivedByUser(targetUser.id);
 
-    return { ...targetUser, reviews };
+    return { ...targetUser, reviews, isDm: targetIsDm };
   }
 
   async requestToJoin(
