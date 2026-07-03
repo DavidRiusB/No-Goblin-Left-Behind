@@ -70,6 +70,20 @@ export class TableMembershipRepository {
     });
   }
 
+  async findUserIdsByTable(
+    tableId: string,
+    manager?: EntityManager,
+  ): Promise<string[]> {
+    const repo = this.getRepo(manager);
+    const rows = await repo
+      .createQueryBuilder('m')
+      .select('user.id', 'userId')
+      .innerJoin('m.user', 'user')
+      .where('m.table = :tableId', { tableId })
+      .getRawMany<{ userId: string }>();
+    return rows.map((r) => r.userId);
+  }
+
   async updateStatus(
     membership: TableMembership,
     status: MembershipStatus,

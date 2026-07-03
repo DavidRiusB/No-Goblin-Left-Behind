@@ -1,5 +1,5 @@
 // src/modules/chat/chat.module.ts
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Message } from './entities/message.entity';
 import { Table } from 'src/modules/tables/entities/table.entity';
@@ -12,11 +12,20 @@ import { ConversationRepository } from './conversation.repository';
 import { Conversation } from './entities/conversation.entity';
 import { ConversationService } from './conversation.service';
 import { ConversationController } from './conversation.controller';
+
+import { JoinRequest } from '../tables/entities/join-request.entity';
 import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Message, Conversation, Table, TableMembership]),
+    TypeOrmModule.forFeature([
+      Message,
+      Conversation,
+      Table,
+      TableMembership,
+      JoinRequest,
+    ]),
+
     NotificationsModule,
   ],
   providers: [

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TablesService } from './tables.service';
 import { TablesController } from './tables.controller';
 import { TableRepository } from './table.repository';
@@ -14,13 +14,14 @@ import { ReviewRepository } from '../reviews/review.repository';
 import { Review } from '../reviews/entity/review.entity';
 import { ReviewsService } from '../reviews/reviews.service';
 import { BadgesModule } from '../badges/badges.module';
+import { ConversationService } from '../chat/conversation.service';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Table, JoinRequest, TableMembership, Review]),
     NotificationsModule,
-    ChatModule,
     BadgesModule,
+    ChatModule,
   ],
   providers: [
     TablesService,

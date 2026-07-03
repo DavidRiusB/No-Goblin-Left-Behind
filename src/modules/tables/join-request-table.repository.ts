@@ -84,6 +84,20 @@ export class JoinRequestRepository {
     });
   }
 
+  async findUserIdsByTable(
+    tableId: string,
+    manager?: EntityManager,
+  ): Promise<string[]> {
+    const repo = this.getRepo(manager);
+    const rows = await repo
+      .createQueryBuilder('r')
+      .select('user.id', 'userId')
+      .innerJoin('r.user', 'user')
+      .where('r.table = :tableId', { tableId })
+      .getRawMany<{ userId: string }>();
+    return rows.map((r) => r.userId);
+  }
+
   async create(
     data: { userId: string; tableId: string; message?: string },
     manager?: EntityManager,

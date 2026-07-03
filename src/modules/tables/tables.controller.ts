@@ -28,6 +28,7 @@ import {
 import { plainToInstance } from 'class-transformer';
 import { UserProfileResponse } from '../users/dtos/user-profile-response.dto';
 import { TableManagementResponse } from './dtos/management-table-response.dto';
+import { OpenConversationDto } from './dtos/open-conversation.dto';
 
 @Controller('tables')
 export class TablesController {
@@ -104,6 +105,19 @@ export class TablesController {
     return plainToInstance(TableDetailResponse, data, {
       excludeExtraneousValues: true,
     });
+  }
+
+  @Post('/:id/open-conversation')
+  @UseGuards(JwtAuthGuard)
+  async open(
+    @Param('id', ParseUUIDPipe) tableId,
+    @Body() dto: OpenConversationDto,
+    @CurrentUser() user: JwtUser,
+  ) {
+    return this.tablesService.openConversation(tableId, [
+      dto.targetId,
+      user.userId,
+    ]);
   }
 
   @Post()

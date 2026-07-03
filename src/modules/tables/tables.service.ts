@@ -369,4 +369,33 @@ export class TablesService {
 
     return { table, memberships, requests };
   }
+
+  async openConversation(tableId: string, userIds: string[]) {
+    const relatedToTable = await this.areAllRelatedToTable(tableId, userIds);
+    if (!relatedToTable) {
+      throw new BadRequestException('You cant talk with that person'); // maybe tone that down 😄
+    }
+    const [userA, userB] = userIds;
+    return this.conversationService.openConversation(userA, userB); // create/fetch, return it
+  }
+
+  async areAllRelatedToTable(
+    tableId: string,
+    userIds: string[],
+  ): Promise<boolean> {
+    const table = await this.tableRepository.findById(tableId);
+    if (!table) throw new NotFoundException('Table not found');
+
+    const [memberIds, requesterIds] = await Promise.all([
+      this.membershipRepository.findUserIdsByTable(tableId),
+      this.joinRequestRepository.findUserIdsByTable(tableId),
+    ]);
+
+    const related = new Set<string>([
+      table.dm.id,
+      ...memberIds,
+      ...requesterIds,
+    ]);
+    return userIds.every((id) => related.has(id));
+  }
 }
