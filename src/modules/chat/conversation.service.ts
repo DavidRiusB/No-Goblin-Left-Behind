@@ -69,7 +69,23 @@ export class ConversationService {
   }
 
   async getMine(userId: string) {
-    return this.conversationRepository.findByUser(userId);
+    const conversations = await this.conversationRepository.findByUser(userId);
+    if (conversations.length === 0) return [];
+
+    const lastMessages = await this.messageRepository.findLastByConversations(
+      conversations.map((c) => c.id),
+    );
+    const lastByConvo = new Map(
+      lastMessages.map((m) => [m.conversation!.id, m]),
+    );
+
+    return conversations
+      .map((c) => ({ ...c, lastMessage: lastByConvo.get(c.id) ?? null }))
+      .sort((a, b) => {
+        const aT = (a.lastMessage?.createdAt ?? a.createdAt).getTime();
+        const bT = (b.lastMessage?.createdAt ?? b.createdAt).getTime();
+        return bT - aT;
+      });
   }
 
   async block(conversationId: string, userId: string): Promise<Conversation> {

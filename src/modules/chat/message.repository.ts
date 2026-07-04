@@ -121,4 +121,18 @@ export class MessageRepository {
       take: limit,
     });
   }
+
+  async findLastByConversations(conversationIds: string[]): Promise<Message[]> {
+    if (conversationIds.length === 0) return [];
+    return this.messageRepository
+      .createQueryBuilder('msg')
+      .innerJoinAndSelect('msg.sender', 'sender')
+      .innerJoinAndSelect('msg.conversation', 'conversation')
+      .distinctOn(['conversation.id'])
+      .where('conversation.id IN (:...ids)', { ids: conversationIds })
+      .andWhere('msg.deletedAt IS NULL')
+      .orderBy('conversation.id')
+      .addOrderBy('msg.createdAt', 'DESC')
+      .getMany();
+  }
 }
