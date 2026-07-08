@@ -1,11 +1,18 @@
 import { Expose, Type } from 'class-transformer';
 
+class BadgeSummaryResponse {
+  @Expose() code!: string;
+  @Expose() label!: string;
+  @Expose() icon!: string;
+  @Expose() count!: number;
+}
+
 export class TableUserResponse {
   @Expose() id!: string;
   @Expose() username!: string;
   @Expose() displayName!: string | null;
   @Expose() avatarUrl!: string | null;
-  @Expose() badges!: Record<string, number>;
+  @Expose() @Type(() => BadgeSummaryResponse) badges!: BadgeSummaryResponse[];
   @Expose() reviewCount!: number;
 }
 

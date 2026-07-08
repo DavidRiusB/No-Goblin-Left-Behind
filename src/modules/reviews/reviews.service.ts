@@ -12,9 +12,15 @@ import { Review } from './entity/review.entity';
 import { UpdateReviewDto } from './dtos/update-review.dto';
 import { assertSelfOrAdmin } from 'src/common/helpers/assert-self-or-admin.helper';
 import { ReviewType } from 'src/common/enums/review-type.enum';
-import { allowedBadgesForType } from 'src/common/badges';
 import { TableRepository } from '../tables/table.repository';
 import { BadgesService } from '../badges/badges.service';
+
+export type BadgeSummaryEntry = {
+  code: string;
+  label: string;
+  icon: string;
+  count: number;
+};
 
 const FUNNY_DEFAULT =
   'Wow… this person was too lazy to write something nice about you 😴';
@@ -122,19 +128,34 @@ export class ReviewsService {
 
     const summaryByUser = new Map<
       string,
-      { badges: Record<string, number>; reviewCount: number }
+      { badges: BadgeSummaryEntry[]; reviewCount: number }
     >();
-
     for (const id of userIds) {
-      summaryByUser.set(id, { badges: {}, reviewCount: 0 });
+      summaryByUser.set(id, { badges: [], reviewCount: 0 });
     }
+
     for (const review of reviews) {
       const entry = summaryByUser.get(review.targetUser.id);
       if (!entry) continue;
       entry.reviewCount += 1;
+
       for (const badge of review.badges) {
-        entry.badges[badge.code] = (entry.badges[badge.code] ?? 0) + 1;
+        const existing = entry.badges.find((b) => b.code === badge.code);
+        if (existing) {
+          existing.count += 1;
+        } else {
+          entry.badges.push({
+            code: badge.code,
+            label: badge.label,
+            icon: badge.icon,
+            count: 1,
+          });
+        }
       }
+    }
+
+    for (const entry of summaryByUser.values()) {
+      entry.badges.sort((a, b) => b.count - a.count);
     }
 
     return summaryByUser;
