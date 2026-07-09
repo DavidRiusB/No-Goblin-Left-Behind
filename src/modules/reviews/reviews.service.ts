@@ -53,16 +53,61 @@ export class ReviewsService {
     const table = await this.tablesRepository.findByIdWithMembers(tableId);
     if (!table) throw new NotFoundException('Table not found');
 
+    // membership rows per party (can be several if someone left and rejoined)
+    const rowsOf = (userId: string) =>
+      table.memberships.filter((m) => m.user.id === userId);
+
+    const reviewerIsDm = table.dm.id === reviewer.userId;
     const targetIsDm = table.dm.id === dto.targetUserId;
-    const type = targetIsDm ? ReviewType.DM : ReviewType.PLAYER;
 
-    const memberIds = new Set(table.memberships.map((m) => m.user.id));
-    const isInTable = (userId: string) =>
-      userId === table.dm.id || memberIds.has(userId);
+    const reviewerRows = rowsOf(reviewer.userId);
+    const targetRows = rowsOf(dto.targetUserId);
 
-    if (!isInTable(reviewer.userId) || !isInTable(dto.targetUserId)) {
+    // in the table = is the DM, or has at least one membership row (any status)
+    if (
+      (!reviewerIsDm && reviewerRows.length === 0) ||
+      (!targetIsDm && targetRows.length === 0)
+    ) {
       throw new BadRequestException('Both users must have shared this table');
     }
+
+    // temporal overlap: their membership windows must have intersected.
+    // the DM spans the table's whole life, so DM ↔ anyone always overlaps.
+    // open memberships (endedAt null) run to "now".
+    const overlaps = (): boolean => {
+      if (reviewerIsDm || targetIsDm) return true;
+      const now = new Date();
+      return reviewerRows.some((r) =>
+        targetRows.some(
+          (t) =>
+            r.joinedAt < (t.endedAt ?? now) && t.joinedAt < (r.endedAt ?? now),
+        ),
+      );
+    };
+
+    console.log(
+      'reviewer rows:',
+      reviewerRows.map((r) => ({
+        j: r.joinedAt,
+        e: r.endedAt,
+        jType: typeof r.joinedAt,
+      })),
+    );
+    console.log(
+      'target rows:',
+      targetRows.map((t) => ({
+        j: t.joinedAt,
+        e: t.endedAt,
+        eType: typeof t.endedAt,
+      })),
+    );
+
+    if (!overlaps()) {
+      throw new BadRequestException(
+        'You were never in this table at the same time as this user',
+      );
+    }
+    const type = targetIsDm ? ReviewType.DM : ReviewType.PLAYER;
 
     const badgeEntities = await this.badgesService.resolveForReview(
       dto.badges ?? [],

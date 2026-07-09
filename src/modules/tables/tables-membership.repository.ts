@@ -87,10 +87,12 @@ export class TableMembershipRepository {
   async updateStatus(
     membership: TableMembership,
     status: MembershipStatus,
+
     manager?: EntityManager,
   ): Promise<TableMembership> {
     const repo = this.getRepo(manager);
     membership.status = status;
+    membership.endedAt = status === MembershipStatus.ACTIVE ? null : new Date();
     return repo.save(membership);
   }
 

@@ -40,5 +40,5 @@ export class TableMembership {
     type: 'timestamp',
     nullable: true,
   })
-  endedAt?: Date;
+  endedAt?: Date | null;
 }
