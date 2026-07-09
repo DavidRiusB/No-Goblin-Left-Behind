@@ -29,6 +29,7 @@ import { plainToInstance } from 'class-transformer';
 import { UserProfileResponse } from '../users/dtos/user-profile-response.dto';
 import { TableManagementResponse } from './dtos/management-table-response.dto';
 import { OpenConversationDto } from './dtos/open-conversation.dto';
+import { MyTablesResponse } from './dtos/my-tables.response.dto';
 
 @Controller('tables')
 export class TablesController {
@@ -42,7 +43,10 @@ export class TablesController {
   @Get('me')
   @UseGuards(JwtAuthGuard)
   async getMyTables(@CurrentUser() requester: JwtUser) {
-    return this.tablesService.getMyTables(requester);
+    const data = await this.tablesService.getMyTables(requester);
+    return plainToInstance(MyTablesResponse, data, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Get(':id/member-view')

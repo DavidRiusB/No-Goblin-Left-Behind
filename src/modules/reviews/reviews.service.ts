@@ -130,6 +130,7 @@ export class ReviewsService {
       string,
       { badges: BadgeSummaryEntry[]; reviewCount: number }
     >();
+
     for (const id of userIds) {
       summaryByUser.set(id, { badges: [], reviewCount: 0 });
     }

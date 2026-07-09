@@ -52,7 +52,7 @@ export class JoinRequestRepository {
     const repo = this.getRepo(manager);
     return repo.find({
       where: { user: { id: userId } },
-      relations: { table: true },
+      relations: { table: { dm: true } },
       order: { createdAt: 'DESC' },
     });
   }
