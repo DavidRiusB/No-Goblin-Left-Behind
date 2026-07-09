@@ -16,7 +16,15 @@ export class TableUserResponse {
   @Expose() reviewCount!: number;
 }
 
-// PUBLIC — no links. the base shape.
+// a departed membership: the full user card + how the stint ended
+class PastMemberResponse {
+  @Expose() @Type(() => TableUserResponse) user!: TableUserResponse;
+  @Expose() status!: string;
+  @Expose() joinedAt!: Date;
+  @Expose() endedAt!: Date | null;
+}
+
+// PUBLIC — no links, no history. the base shape.
 export class TableDetailResponse {
   @Expose() id!: string;
   @Expose() title!: string;
@@ -38,16 +46,12 @@ export class TableDetailResponse {
   @Expose() ageRequirement!: string;
   @Expose() status!: string;
 
-  @Expose()
-  @Type(() => TableUserResponse)
-  dm!: TableUserResponse;
-
-  @Expose()
-  @Type(() => TableUserResponse)
-  players!: TableUserResponse[];
+  @Expose() @Type(() => TableUserResponse) dm!: TableUserResponse;
+  @Expose() @Type(() => TableUserResponse) players!: TableUserResponse[];
 }
 
-// MEMBER — everything public + the one private field.
+// MEMBER — adds the private stuff: links + membership history
 export class TableMemberDetailResponse extends TableDetailResponse {
   @Expose() links!: string | null;
+  @Expose() @Type(() => PastMemberResponse) pastMembers!: PastMemberResponse[];
 }

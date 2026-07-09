@@ -39,22 +39,38 @@ export class TablesService {
     private readonly dataSource: DataSource,
   ) {}
 
-  // takes a table's dm + active members, returns them with badge counts attached.
+  // takes a table's dm + members, returns them with badge counts attached.
   // no response shaping — just enriching users with their summary.
   private async attachBadgeSummaries(table: Table) {
-    const memberUsers = table.memberships
-      .filter((m) => m.status === MembershipStatus.ACTIVE)
-      .map((m) => m.user);
-    const allUsers = [table.dm, ...memberUsers];
-    const userIds = allUsers.map((u) => u.id);
+    const activeMemberships = table.memberships.filter(
+      (m) => m.status === MembershipStatus.ACTIVE,
+    );
+    const pastMemberships = table.memberships.filter(
+      (m) => m.status !== MembershipStatus.ACTIVE,
+    );
 
-    const summaries = await this.reviewsService.getBadgeSummaries(userIds);
+    // everyone goes into ONE summaries query — active, past, dm
+    const allUsers = [
+      table.dm,
+      ...activeMemberships.map((m) => m.user),
+      ...pastMemberships.map((m) => m.user),
+    ];
+    const summaries = await this.reviewsService.getBadgeSummaries(
+      allUsers.map((u) => u.id),
+    );
 
     const withBadges = (u: User) => ({ ...u, ...summaries.get(u.id)! });
 
     return {
       dm: withBadges(table.dm),
-      players: memberUsers.map(withBadges),
+      players: activeMemberships.map((m) => withBadges(m.user)),
+      // membership rows kept whole: user enriched, status/dates alongside
+      pastMembers: pastMemberships.map((m) => ({
+        user: withBadges(m.user),
+        status: m.status,
+        joinedAt: m.joinedAt,
+        endedAt: m.endedAt,
+      })),
     };
   }
 
@@ -121,12 +137,8 @@ export class TablesService {
 
     this.assertTableMember(table, requester);
 
-    const { dm, players } = await this.attachBadgeSummaries(table);
-    return {
-      ...table,
-      dm,
-      players,
-    };
+    const { dm, players, pastMembers } = await this.attachBadgeSummaries(table);
+    return { ...table, dm, players, pastMembers };
   }
 
   async getConnectionProfile(
@@ -142,11 +154,8 @@ export class TablesService {
       this.membershipRepository.findByTable(tableId),
     ]);
 
-    console.log(requests);
-    console.log(memberships);
-
     const hasRequest = (userId: string) =>
-      requests.some((r) => r.user.id === userId);
+      requests.some((r) => r.user.id === userId); //
     const hasMembership = (userId: string) =>
       memberships.some((m) => m.user.id === userId); // any status — same rule as everywhere
 
@@ -162,7 +171,6 @@ export class TablesService {
       (requesterIsDm && isConnected(targetUserId)) ||
       (targetIsDm && isConnected(requester.userId)) ||
       requester.role === Role.Admin;
-    console.log(allowed);
 
     if (!allowed) {
       throw new ForbiddenException('No request connects you to this profile');
