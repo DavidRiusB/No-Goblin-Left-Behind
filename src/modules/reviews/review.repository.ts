@@ -33,6 +33,7 @@ export class ReviewRepository {
         targetUser: { id: targetUserId },
         table: { id: tableId },
       },
+      relations: { badges: true },
     });
   }
 
@@ -96,17 +97,18 @@ export class ReviewRepository {
   async findById(id: string): Promise<Review | null> {
     return this.reviewRepository.findOne({
       where: { id },
-      relations: { reviewer: true, targetUser: true, table: { dm: true } },
+      relations: {
+        reviewer: true,
+        targetUser: true,
+        table: { dm: true },
+        badges: true,
+      },
     });
   }
 
-  async update(review: Review, manager?: EntityManager): Promise<Review> {
+  async save(review: Review, manager?: EntityManager): Promise<Review> {
     const repo = this.getRepo(manager);
-    try {
-      return await repo.save(review);
-    } catch (error: any) {
-      throw new InternalServerErrorException('Failed to update review');
-    }
+    return repo.save(review);
   }
 
   async softDelete(id: string, manager?: EntityManager): Promise<void> {

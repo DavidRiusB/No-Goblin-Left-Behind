@@ -134,42 +134,60 @@ export class TablesService {
     targetUserId: string,
     requester: JwtUser,
   ) {
-    const table = await this.tableRepository.findById(tableId); // lean: table + dm
+    const table = await this.tableRepository.findById(tableId);
     if (!table) throw new NotFoundException('Table not found');
 
-    // who's connected to this table by a request (any status — supports
-    // retroactive: a rejected requester keeps visibility for re-accept)
-    const requests = await this.joinRequestRepository.findByTable(tableId);
+    const [requests, memberships] = await Promise.all([
+      this.joinRequestRepository.findByTable(tableId),
+      this.membershipRepository.findByTable(tableId),
+    ]);
+
+    console.log(requests);
+    console.log(memberships);
+
     const hasRequest = (userId: string) =>
       requests.some((r) => r.user.id === userId);
+    const hasMembership = (userId: string) =>
+      memberships.some((m) => m.user.id === userId); // any status — same rule as everywhere
+
+    // "connected to the table" = request OR membership
+    const isConnected = (userId: string) =>
+      hasRequest(userId) || hasMembership(userId);
 
     const requesterIsDm = table.dm.id === requester.userId;
     const targetIsDm = table.dm.id === targetUserId;
 
-    // symmetric gate: a request connects the two parties, either direction
+    // symmetric: either party is the DM, the other is connected
     const allowed =
-      (requesterIsDm && hasRequest(targetUserId)) || // DM viewing a requester
-      (targetIsDm && hasRequest(requester.userId)) || // requester viewing the DM
+      (requesterIsDm && isConnected(targetUserId)) ||
+      (targetIsDm && isConnected(requester.userId)) ||
       requester.role === Role.Admin;
+    console.log(allowed);
 
     if (!allowed) {
       throw new ForbiddenException('No request connects you to this profile');
     }
 
-    // resolve the target user object — either the DM, or the requester from the request rows
+    // resolve target: DM, or from request rows, or from membership rows
     let targetUser: User | undefined;
     if (targetIsDm) {
       targetUser = table.dm;
     } else {
-      const req = requests.find((r) => r.user.id === targetUserId);
-      targetUser = req?.user;
+      targetUser =
+        requests.find((r) => r.user.id === targetUserId)?.user ??
+        memberships.find((m) => m.user.id === targetUserId)?.user;
     }
     if (!targetUser) {
       throw new NotFoundException('User not found for this table');
     }
 
     const reviews = await this.reviewsService.getReceivedByUser(targetUser.id);
-    return { ...targetUser, reviews };
+    const myReview = await this.reviewsService.findMine(
+      requester.userId,
+      targetUser.id,
+      tableId,
+    );
+    return { ...targetUser, reviews, myReview };
   }
 
   async getTablePlayerDetail(tableId, playerId, requester) {
@@ -179,7 +197,7 @@ export class TablesService {
 
     const targetIsDm = table.dm.id === playerId;
     const targetMembership = table.memberships.find(
-      (m) => m.user.id === playerId && m.status === MembershipStatus.ACTIVE,
+      (m) => m.user.id === playerId,
     );
     if (!targetIsDm && !targetMembership) {
       throw new NotFoundException('Player not found in this table');
@@ -188,7 +206,13 @@ export class TablesService {
 
     const reviews = await this.reviewsService.getReceivedByUser(targetUser.id);
 
-    return { ...targetUser, reviews, isDm: targetIsDm };
+    const myReview = await this.reviewsService.findMine(
+      requester.userId,
+      targetUser.id,
+      tableId,
+    );
+
+    return { ...targetUser, reviews, isDm: targetIsDm, myReview };
   }
 
   async requestToJoin(

@@ -1,23 +1,10 @@
-import {
-  IsArray,
-  IsEnum,
-  IsOptional,
-  IsString,
-  MaxLength,
-} from 'class-validator';
+import { IsArray, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class UpdateReviewDto {
   @IsOptional()
-  @IsArray({ message: 'Shared badges must be an array' })
-  sharedBadges?: string[];
-
-  @IsOptional()
-  @IsArray({ message: 'DM badges must be an array' })
-  dmBadges?: string[];
-
-  @IsOptional()
-  @IsArray({ message: 'Player badges must be an array' })
-  playerBadges?: string[];
+  @IsArray({ message: 'Badges must be an array' })
+  @IsString({ each: true, message: 'Each badge must be a string' })
+  badges?: string[];
 
   @IsOptional()
   @IsString({ message: 'Written review must be a string' })

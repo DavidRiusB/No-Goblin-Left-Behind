@@ -37,6 +37,10 @@ export class ReviewsService {
     return this.reviewRepository.findReceivedByUser(userId);
   }
 
+  async findMine(requester: string, target: string, table: string) {
+    return this.reviewRepository.findExisting(requester, target, table);
+  }
+
   async create(
     tableId: string,
     dto: CreateReviewDto,
@@ -91,7 +95,7 @@ export class ReviewsService {
     id: string,
     dto: UpdateReviewDto,
     requester: JwtUser,
-  ): Promise<Review> {
+  ): Promise<void> {
     const review = await this.reviewRepository.findById(id);
     if (!review) throw new NotFoundException('Review not found');
 
@@ -99,19 +103,21 @@ export class ReviewsService {
       throw new ForbiddenException('You can only edit your own reviews');
     }
 
-    // re-validate badge role-context on edit
-    const isTargetDm = review.table.dm.id === review.targetUser.id;
-    if (!isTargetDm && dto.dmBadges?.length) {
-      throw new BadRequestException(
-        'DM badges can only be given to the table DM',
+    // badges: re-resolve through the same validation as create.
+    // review.type already encodes the target's role — the old manual
+    // dm/player cross-checks live inside resolveForReview now.
+    if (dto.badges) {
+      review.badges = await this.badgesService.resolveForReview(
+        dto.badges,
+        review.type,
       );
     }
-    if (isTargetDm && dto.playerBadges?.length) {
-      throw new BadRequestException('Player badges cannot be given to the DM');
+
+    if (dto.writtenReview !== undefined) {
+      review.writtenReview = dto.writtenReview.trim() || FUNNY_DEFAULT;
     }
 
-    Object.assign(review, dto);
-    return this.reviewRepository.update(review);
+    await this.reviewRepository.save(review);
   }
 
   async delete(id: string, requester: JwtUser): Promise<void> {

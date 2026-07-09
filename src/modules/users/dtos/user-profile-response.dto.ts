@@ -35,4 +35,5 @@ export class UserProfileResponse {
   @Expose()
   @Type(() => ReviewResponse)
   reviews!: ReviewResponse[];
+  @Expose() @Type(() => ReviewResponse) myReview!: ReviewResponse | null;
 }

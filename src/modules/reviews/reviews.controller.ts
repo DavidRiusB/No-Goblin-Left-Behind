@@ -43,14 +43,15 @@ export class ReviewsController {
     return { success: true };
   }
 
-  @Patch('reviews/:id')
+  @Patch(':id')
   @UseGuards(JwtAuthGuard)
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateReviewDto,
     @CurrentUser() requester: JwtUser,
   ) {
-    return this.reviewsService.update(id, dto, requester);
+    await this.reviewsService.update(id, dto, requester);
+    return { success: true };
   }
 
   @Delete('reviews/:id')
