@@ -85,23 +85,6 @@ export class ReviewsService {
       );
     };
 
-    console.log(
-      'reviewer rows:',
-      reviewerRows.map((r) => ({
-        j: r.joinedAt,
-        e: r.endedAt,
-        jType: typeof r.joinedAt,
-      })),
-    );
-    console.log(
-      'target rows:',
-      targetRows.map((t) => ({
-        j: t.joinedAt,
-        e: t.endedAt,
-        eType: typeof t.endedAt,
-      })),
-    );
-
     if (!overlaps()) {
       throw new BadRequestException(
         'You were never in this table at the same time as this user',
