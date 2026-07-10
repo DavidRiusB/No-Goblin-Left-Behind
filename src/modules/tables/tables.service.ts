@@ -248,9 +248,7 @@ export class TablesService {
     if (table.ageRequirement === AgeRequirement.ADULTS_ONLY) {
       const requesterUser = await this.userService.findMe(requester.userId);
       if (!requesterUser?.birthDate || ageFrom(requesterUser.birthDate) < 18) {
-        throw new BadRequestException(
-          'This table requires players 18+. Add your birth date to your profile to confirm your age.',
-        );
+        throw new BadRequestException('This table requires players 18+.');
       }
     }
 
