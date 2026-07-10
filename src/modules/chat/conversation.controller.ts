@@ -13,6 +13,11 @@ import { JwtAuthGuard } from 'src/common/guards/jwt-auth-guard';
 import { ConversationService } from './conversation.service';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { JwtUser } from 'src/common/types/jwt-user.type';
+import { plainToInstance } from 'class-transformer';
+import {
+  ConversationResponse,
+  MessageResponse,
+} from './dtos/chat-participant-response.dto';
 
 @Controller('conversations')
 @UseGuards(JwtAuthGuard)
@@ -21,7 +26,10 @@ export class ConversationController {
 
   @Get()
   async getMine(@CurrentUser() user: JwtUser) {
-    return this.conversationService.getMine(user.userId);
+    const data = await this.conversationService.getMine(user.userId);
+    return plainToInstance(ConversationResponse, data, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Get(':id/messages')
@@ -31,12 +39,15 @@ export class ConversationController {
     @Query('before') before?: string,
     @Query('limit') limit?: string,
   ) {
-    return this.conversationService.getHistory(
+    const data = await this.conversationService.getHistory(
       id,
       user.userId,
       limit ? parseInt(limit, 10) : 30,
       before ? new Date(before) : undefined,
     );
+    return plainToInstance(MessageResponse, data, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Patch(':id/block')

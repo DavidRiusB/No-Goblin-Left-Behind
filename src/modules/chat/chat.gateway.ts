@@ -80,6 +80,7 @@ export class ChatGateway {
             id: message.sender.id,
             username: message.sender.username,
             displayName: message.sender.displayName,
+            avatarUrl: message.sender.avatarUrl,
           },
           createdAt: message.createdAt,
         });
@@ -145,6 +146,7 @@ export class ChatGateway {
           id: message.sender.id,
           username: message.sender.username,
           displayName: message.sender.displayName,
+          avatarUrl: message.sender.avatarUrl,
         },
         createdAt: message.createdAt,
       });

@@ -30,6 +30,7 @@ import { UserProfileResponse } from '../users/dtos/user-profile-response.dto';
 import { TableManagementResponse } from './dtos/management-table-response.dto';
 import { OpenConversationDto } from './dtos/open-conversation.dto';
 import { MyTablesResponse } from './dtos/my-tables.response.dto';
+import { ConversationResponse } from '../chat/dtos/chat-participant-response.dto';
 
 @Controller('tables')
 export class TablesController {
@@ -118,10 +119,13 @@ export class TablesController {
     @Body() dto: OpenConversationDto,
     @CurrentUser() user: JwtUser,
   ) {
-    return this.tablesService.openConversation(tableId, [
+    const data = await this.tablesService.openConversation(tableId, [
       dto.targetId,
       user.userId,
     ]);
+    return plainToInstance(ConversationResponse, data, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Post()
