@@ -102,6 +102,7 @@ export class ChatGateway {
             conversationId: data.conversationId,
             messageId: message.id,
             senderId: client.data.userId,
+            senderName: message.sender.displayName ?? message.sender.username,
           },
         );
       }
