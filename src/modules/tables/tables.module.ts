@@ -14,7 +14,7 @@ import { ReviewRepository } from '../reviews/review.repository';
 import { Review } from '../reviews/entity/review.entity';
 import { ReviewsService } from '../reviews/reviews.service';
 import { BadgesModule } from '../badges/badges.module';
-import { ConversationService } from '../chat/conversation.service';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
@@ -22,6 +22,7 @@ import { ConversationService } from '../chat/conversation.service';
     NotificationsModule,
     BadgesModule,
     ChatModule,
+    UsersModule,
   ],
   providers: [
     TablesService,

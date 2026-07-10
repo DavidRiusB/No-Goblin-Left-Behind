@@ -26,6 +26,9 @@ import { NotificationType } from 'src/common/enums/notification-type.enum';
 import { ConversationService } from '../chat/conversation.service';
 import { Role } from 'src/common/enums/roles.enum';
 import { ReviewsService } from '../reviews/reviews.service';
+import { AgeRequirement } from 'src/common/enums/age-requirement.enum';
+import { ageFrom } from 'src/common/helpers/age.helper';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class TablesService {
@@ -36,6 +39,7 @@ export class TablesService {
     private readonly notificationsService: NotificationsService,
     private readonly conversationService: ConversationService,
     private readonly reviewsService: ReviewsService,
+    private readonly userService: UsersService,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -241,21 +245,35 @@ export class TablesService {
       );
     }
 
+    if (table.ageRequirement === AgeRequirement.ADULTS_ONLY) {
+      const requesterUser = await this.userService.findMe(requester.userId);
+      if (!requesterUser?.birthDate || ageFrom(requesterUser.birthDate) < 18) {
+        throw new BadRequestException(
+          'This table requires players 18+. Add your birth date to your profile to confirm your age.',
+        );
+      }
+    }
+
     const request = await this.joinRequestRepository.create({
       userId: requester.userId,
       tableId,
       message: data.message,
     });
 
-    await this.notificationsService.notify(
-      table.dm.id,
-      NotificationType.REQUEST_RECEIVED,
-      { tableId, tableTitle: table.title, requesterId: requester.userId },
-    );
-    await this.conversationService.openConversation(
-      requester.userId,
-      table.dm.id,
-    );
+    try {
+      await this.notificationsService.notify(
+        table.dm.id,
+        NotificationType.REQUEST_RECEIVED,
+        { tableId, tableTitle: table.title, requesterId: requester.userId },
+      );
+      await this.conversationService.openConversation(
+        requester.userId,
+        table.dm.id,
+      );
+    } catch (err) {
+      // request stands; log and move on
+      console.error('join-request side effects failed', err);
+    }
 
     return request;
   }
