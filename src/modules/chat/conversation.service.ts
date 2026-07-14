@@ -87,6 +87,15 @@ export class ConversationService {
         return bT - aT;
       });
   }
+  // service
+  async getOne(conversationId: string, userId: string): Promise<Conversation> {
+    const conv = await this.conversationRepository.findById(conversationId);
+    if (!conv) throw new NotFoundException('Conversation not found');
+    if (!this.isParticipant(conv, userId)) {
+      throw new ForbiddenException('You are not part of this conversation');
+    }
+    return conv;
+  }
 
   async block(conversationId: string, userId: string): Promise<Conversation> {
     const conv = await this.conversationRepository.findById(conversationId);

@@ -26,5 +26,8 @@ export class ConversationResponse {
   @Type(() => ChatParticipantResponse)
   participantB!: ChatParticipantResponse;
   @Expose() @Type(() => MessageResponse) lastMessage!: MessageResponse | null;
-  @Expose() isBlocked!: boolean;
+  @Expose() status!: string;
+  @Expose()
+  @Type(() => ChatParticipantResponse)
+  blockedBy!: ChatParticipantResponse | null;
 }

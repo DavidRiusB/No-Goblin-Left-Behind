@@ -61,7 +61,7 @@ export class ConversationRepository {
         { participantA: { id: userId } },
         { participantB: { id: userId } },
       ],
-      relations: { participantA: true, participantB: true },
+      relations: { participantA: true, participantB: true, blockedBy: true },
       order: { createdAt: 'DESC' },
     });
   }

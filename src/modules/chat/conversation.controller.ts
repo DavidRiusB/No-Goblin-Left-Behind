@@ -32,6 +32,17 @@ export class ConversationController {
     });
   }
 
+  @Get(':id')
+  async getOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: JwtUser,
+  ) {
+    const data = await this.conversationService.getOne(id, user.userId);
+    return plainToInstance(ConversationResponse, data, {
+      excludeExtraneousValues: true,
+    });
+  }
+
   @Get(':id/messages')
   async getHistory(
     @Param('id', ParseUUIDPipe) id: string,
