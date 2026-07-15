@@ -37,6 +37,14 @@ export class ReviewRepository {
     });
   }
 
+  async findWrittenByUser(userId: string): Promise<Review[]> {
+    return this.reviewRepository.find({
+      where: { reviewer: { id: userId } },
+      relations: { targetUser: true, badges: true, table: true },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
   async create(
     data: {
       reviewerId: string;

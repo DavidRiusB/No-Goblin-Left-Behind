@@ -18,6 +18,7 @@ import type { JwtUser } from 'src/common/types/jwt-user.type';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth-guard';
 import { plainToInstance } from 'class-transformer';
 import { ReviewResponse } from '../users/dtos/user-profile-response.dto';
+import { WrittenReviewResponse } from './dtos/written-review-response.dto';
 
 @Controller('reviews')
 export class ReviewsController {
@@ -28,6 +29,15 @@ export class ReviewsController {
   async getMyReviews(@CurrentUser() user: JwtUser) {
     const reviews = await this.reviewsService.getReceivedByUser(user.userId);
     return plainToInstance(ReviewResponse, reviews, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  @Get('written-by-me')
+  @UseGuards(JwtAuthGuard)
+  async getWrittenByMe(@CurrentUser() user: JwtUser) {
+    const data = await this.reviewsService.getWrittenByUser(user.userId);
+    return plainToInstance(WrittenReviewResponse, data, {
       excludeExtraneousValues: true,
     });
   }

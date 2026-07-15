@@ -1,6 +1,6 @@
 import { Expose, Type } from 'class-transformer';
 
-class ReviewerResponse {
+export class ReviewerResponse {
   @Expose() id!: string;
   @Expose() username!: string;
   @Expose() displayName!: string | null;

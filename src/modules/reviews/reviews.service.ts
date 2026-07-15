@@ -37,6 +37,10 @@ export class ReviewsService {
     return this.reviewRepository.findReceivedByUser(userId);
   }
 
+  async getWrittenByUser(userId: string): Promise<Review[]> {
+    return this.reviewRepository.findWrittenByUser(userId);
+  }
+
   async findMine(requester: string, target: string, table: string) {
     return this.reviewRepository.findExisting(requester, target, table);
   }
