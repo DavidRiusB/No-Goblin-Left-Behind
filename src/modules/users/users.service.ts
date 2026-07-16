@@ -1,9 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { UserRepository } from './user.repository';
 import { User } from './entity/user.entity';
 import { UpdateUserDto } from './dtos/user-update.dto';
 import { JwtUser } from 'src/common/types/jwt-user.type';
 import { assertSelfOrStaff } from 'src/common/helpers/assert-self-or-admin.helper';
+import { atLeast } from 'src/common/helpers/role-rank.helper';
 
 @Injectable()
 export class UsersService {
@@ -37,6 +42,21 @@ export class UsersService {
     if (!target) throw new NotFoundException('User not found');
     Object.assign(target, userData);
     return this.userRepository.update(target);
+  }
+
+  async banUser(id: string, requester: JwtUser): Promise<User> {
+    const user = await this.findUserById(id, requester);
+    if (atLeast(user.role, requester.role)) {
+      throw new ForbiddenException('Cannot ban a user of equal or higher role');
+    }
+    user.bannedAt = new Date();
+    return this.userRepository.update(user);
+  }
+
+  async unbanUser(id: string, requester: JwtUser): Promise<User> {
+    const user = await this.findUserById(id, requester);
+    user.bannedAt = null;
+    return this.userRepository.update(user);
   }
 
   async deleteMe(userId: string): Promise<void> {

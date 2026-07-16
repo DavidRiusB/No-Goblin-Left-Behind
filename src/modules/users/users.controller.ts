@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Query,
   UseGuards,
@@ -13,6 +14,10 @@ import { JwtAuthGuard } from 'src/common/guards/jwt-auth-guard';
 import { UpdateUserDto } from './dtos/user-update.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { JwtUser } from 'src/common/types/jwt-user.type';
+import { MinRole } from 'src/common/helpers/min-role.guard';
+import { Role } from 'src/common/enums/roles.enum';
+import { plainToInstance } from 'class-transformer';
+import { UserProfileResponse } from './dtos/user-profile-response.dto';
 
 @Controller('users')
 export class UsersController {
@@ -38,6 +43,30 @@ export class UsersController {
     @CurrentUser() user: JwtUser,
   ) {
     return this.userService.update(updateUserDto, user.userId);
+  }
+
+  @Patch(':id/ban')
+  @UseGuards(JwtAuthGuard, MinRole(Role.Admin))
+  async ban(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: JwtUser,
+  ) {
+    const data = await this.userService.banUser(id, user);
+    return plainToInstance(UserProfileResponse, data, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  @Patch(':id/unban')
+  @UseGuards(JwtAuthGuard, MinRole(Role.Admin))
+  async unban(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: JwtUser,
+  ) {
+    const data = await this.userService.unbanUser(id, user);
+    return plainToInstance(UserProfileResponse, data, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Delete('me')

@@ -29,6 +29,7 @@ import { AgeRequirement } from 'src/common/enums/age-requirement.enum';
 import { ageFrom } from 'src/common/helpers/age.helper';
 import { UsersService } from '../users/users.service';
 import { assertSelfOrStaff } from 'src/common/helpers/assert-self-or-admin.helper';
+import { TableStatus } from 'src/common/enums/table-status.enum';
 
 @Injectable()
 export class TablesService {
@@ -127,6 +128,8 @@ export class TablesService {
   async getTableDetail(id: string) {
     const table = await this.tableRepository.findByIdWithMembers(id);
     if (!table) throw new NotFoundException('Table not found');
+    if (table.bannedAt) throw new NotFoundException('Table not available');
+
     const { dm, players } = await this.attachBadgeSummaries(table);
     return {
       ...table,
@@ -233,6 +236,8 @@ export class TablesService {
     data: CreateJoinRequestDto,
   ): Promise<JoinRequest> {
     const table = await this.findById(tableId);
+    if (table.bannedAt)
+      throw new BadRequestException('This table is not accepting requests');
 
     const existing = await this.joinRequestRepository.findExisting(
       requester.userId,
@@ -282,6 +287,8 @@ export class TablesService {
     requester: JwtUser,
   ): Promise<Table> {
     const table = await this.findById(id);
+    if (table.bannedAt)
+      throw new ForbiddenException('This table has been suspended');
     assertSelfOrStaff(requester.userId, table.dm.id, requester.role);
     Object.assign(table, data);
     return this.tableRepository.update(table);
@@ -445,5 +452,19 @@ export class TablesService {
       ...requesterIds,
     ]);
     return userIds.every((id) => related.has(id));
+  }
+
+  async banTable(id: string): Promise<Table> {
+    const table = await this.tableRepository.findById(id);
+    if (!table) throw new NotFoundException('Table not found');
+    table.bannedAt = new Date();
+    return this.tableRepository.update(table);
+  }
+
+  async unbanTable(id: string): Promise<Table> {
+    const table = await this.tableRepository.findById(id);
+    if (!table) throw new NotFoundException('Table not found');
+    table.bannedAt = null;
+    return this.tableRepository.update(table);
   }
 }

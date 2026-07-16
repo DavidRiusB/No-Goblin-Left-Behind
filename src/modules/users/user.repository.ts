@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entity/user.entity';
 import { EntityManager, Repository } from 'typeorm';
 import { RegisterUserDto } from '../auth/dtos/refister.dto';
+import { promises } from 'dns';
 
 @Injectable()
 export class UserRepository {

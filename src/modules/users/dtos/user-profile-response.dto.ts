@@ -1,10 +1,11 @@
-import { Expose, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 
 export class ReviewerResponse {
   @Expose() id!: string;
   @Expose() username!: string;
   @Expose() displayName!: string | null;
   @Expose() avatarUrl!: string | null;
+  @Expose() @Transform(({ obj }) => !!obj.bannedAt) isBanned!: boolean;
 }
 
 class BadgeResponse {
@@ -31,6 +32,7 @@ export class UserProfileResponse {
   @Expose() playStyleTags!: string[];
   @Expose() timezone!: string | null;
   @Expose() isDm!: boolean;
+  @Expose() bannedAt!: string | null;
 
   @Expose()
   @Type(() => ReviewResponse)

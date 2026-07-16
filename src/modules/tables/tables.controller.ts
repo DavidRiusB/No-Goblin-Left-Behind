@@ -30,6 +30,8 @@ import { TableManagementResponse } from './dtos/management-table-response.dto';
 import { OpenConversationDto } from './dtos/open-conversation.dto';
 import { MyTablesResponse } from './dtos/my-tables.response.dto';
 import { ConversationResponse } from '../chat/dtos/chat-participant-response.dto';
+import { MinRole } from 'src/common/helpers/min-role.guard';
+import { Role } from 'src/common/enums/roles.enum';
 
 @Controller('tables')
 export class TablesController {
@@ -145,6 +147,24 @@ export class TablesController {
     @CurrentUser() requester: JwtUser,
   ) {
     return this.tablesService.update(id, updateTableDto, requester);
+  }
+
+  @Patch(':id/ban')
+  @UseGuards(JwtAuthGuard, MinRole(Role.Admin))
+  async ban(@Param('id', ParseUUIDPipe) id: string) {
+    const data = await this.tablesService.banTable(id);
+    return plainToInstance(TableDetailResponse, data, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  @Patch(':id/unban')
+  @UseGuards(JwtAuthGuard, MinRole(Role.Admin))
+  async unban(@Param(':id', ParseUUIDPipe) id: string) {
+    const data = await this.tablesService.unbanTable(id);
+    return plainToInstance(TableDetailResponse, data, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Delete(':id')

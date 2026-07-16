@@ -49,6 +49,8 @@ export class TableRepository {
         return `table.seatsTotal > ${subQuery}`;
       })
       .andWhere('table.status = :status', { status: TableStatus.OPEN })
+      .andWhere('table.bannedAt IS NULL')
+      .andWhere('dm.bannedAt IS NULL')
       .setParameter('activeStatus', MembershipStatus.ACTIVE);
 
     if (filters.system) {

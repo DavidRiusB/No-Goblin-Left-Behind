@@ -1,4 +1,4 @@
-import { Expose, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 
 class BadgeSummaryResponse {
   @Expose() code!: string;
@@ -48,6 +48,7 @@ export class TableDetailResponse {
 
   @Expose() @Type(() => TableUserResponse) dm!: TableUserResponse;
   @Expose() @Type(() => TableUserResponse) players!: TableUserResponse[];
+  @Expose() @Transform(({ obj }) => !!obj.bannedAt) isBanned!: boolean;
 }
 
 // MEMBER — adds the private stuff: links + membership history
