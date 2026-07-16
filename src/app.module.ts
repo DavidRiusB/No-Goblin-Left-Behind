@@ -15,6 +15,7 @@ import { RealtimeModule } from './modules/realtime/realtime.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { BadgesModule } from './modules/badges/badges.module';
+import { ReportsModule } from './modules/reports/reports.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { BadgesModule } from './modules/badges/badges.module';
     RealtimeModule,
     ChatModule,
     BadgesModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

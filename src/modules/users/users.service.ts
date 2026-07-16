@@ -1,14 +1,9 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserRepository } from './user.repository';
 import { User } from './entity/user.entity';
 import { UpdateUserDto } from './dtos/user-update.dto';
-import { Role } from 'src/common/enums/roles.enum';
-import { assertSelfOrAdmin } from 'src/common/helpers/assert-self-or-admin.helper';
 import { JwtUser } from 'src/common/types/jwt-user.type';
+import { assertSelfOrStaff } from 'src/common/helpers/assert-self-or-admin.helper';
 
 @Injectable()
 export class UsersService {
@@ -32,7 +27,7 @@ export class UsersService {
       throw new NotFoundException(`User with id ${id} not found`);
     }
 
-    assertSelfOrAdmin(requester.userId, target.id, requester.role);
+    assertSelfOrStaff(requester.userId, target.id, requester.role);
 
     return target;
   }

@@ -166,4 +166,7 @@ export class Table {
 
   @UpdateDateColumn()
   updatedAt!: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  bannedAt!: Date | null;
 }

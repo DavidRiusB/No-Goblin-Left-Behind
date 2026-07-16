@@ -11,7 +11,6 @@ import { CreateTableDto } from './dtos/create-table.dto';
 import { User } from '../users/entity/user.entity';
 import { UpdateTableDto } from './dtos/update-table.dto';
 import { JwtUser } from 'src/common/types/jwt-user.type';
-import { assertSelfOrAdmin } from 'src/common/helpers/assert-self-or-admin.helper';
 import { JoinRequestRepository } from './join-request-table.repository';
 import { TableMembershipRepository } from './tables-membership.repository';
 import { DataSource } from 'typeorm';
@@ -29,6 +28,7 @@ import { ReviewsService } from '../reviews/reviews.service';
 import { AgeRequirement } from 'src/common/enums/age-requirement.enum';
 import { ageFrom } from 'src/common/helpers/age.helper';
 import { UsersService } from '../users/users.service';
+import { assertSelfOrStaff } from 'src/common/helpers/assert-self-or-admin.helper';
 
 @Injectable()
 export class TablesService {
@@ -282,14 +282,14 @@ export class TablesService {
     requester: JwtUser,
   ): Promise<Table> {
     const table = await this.findById(id);
-    assertSelfOrAdmin(requester.userId, table.dm.id, requester.role);
+    assertSelfOrStaff(requester.userId, table.dm.id, requester.role);
     Object.assign(table, data);
     return this.tableRepository.update(table);
   }
 
   async delete(id: string, requester: JwtUser): Promise<void> {
     const table = await this.findById(id);
-    assertSelfOrAdmin(requester.userId, table.dm.id, requester.role);
+    assertSelfOrStaff(requester.userId, table.dm.id, requester.role);
     await this.tableRepository.softDelete(id);
   }
 
@@ -306,7 +306,7 @@ export class TablesService {
       throw new BadRequestException('Request does not belong to this table');
     }
 
-    assertSelfOrAdmin(requester.userId, request.table.dm.id, requester.role);
+    assertSelfOrStaff(requester.userId, request.table.dm.id, requester.role);
 
     if (request.status !== JoinRequestStatus.PENDING) {
       throw new BadRequestException('Only pending requests can be updated');
@@ -390,7 +390,7 @@ export class TablesService {
       throw new BadRequestException('Membership does not belong to this table');
     }
 
-    assertSelfOrAdmin(requester.userId, membership.table.dm.id, requester.role);
+    assertSelfOrStaff(requester.userId, membership.table.dm.id, requester.role);
 
     if (membership.status !== MembershipStatus.ACTIVE) {
       throw new BadRequestException('Player is not an active member');

@@ -8,7 +8,6 @@ import {
   Patch,
   Post,
   Query,
-  SerializeOptions,
   UseGuards,
 } from '@nestjs/common';
 import { TablesService } from './tables.service';

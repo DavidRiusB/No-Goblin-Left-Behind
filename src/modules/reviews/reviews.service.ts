@@ -10,10 +10,10 @@ import { JwtUser } from 'src/common/types/jwt-user.type';
 import { CreateReviewDto } from './dtos/create-review.dto';
 import { Review } from './entity/review.entity';
 import { UpdateReviewDto } from './dtos/update-review.dto';
-import { assertSelfOrAdmin } from 'src/common/helpers/assert-self-or-admin.helper';
 import { ReviewType } from 'src/common/enums/review-type.enum';
 import { TableRepository } from '../tables/table.repository';
 import { BadgesService } from '../badges/badges.service';
+import { assertSelfOrStaff } from 'src/common/helpers/assert-self-or-admin.helper';
 
 export type BadgeSummaryEntry = {
   code: string;
@@ -156,7 +156,7 @@ export class ReviewsService {
     const review = await this.reviewRepository.findById(id);
     if (!review) throw new NotFoundException('Review not found');
 
-    assertSelfOrAdmin(requester.userId, review.reviewer.id, requester.role);
+    assertSelfOrStaff(requester.userId, review.reviewer.id, requester.role);
 
     await this.reviewRepository.softDelete(id);
   }
