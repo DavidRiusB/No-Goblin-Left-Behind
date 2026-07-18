@@ -467,4 +467,21 @@ export class TablesService {
     table.bannedAt = null;
     return this.tableRepository.update(table);
   }
+
+  async adminSearchTables(q: string): Promise<Table[]> {
+    if (!q || q.trim().length < 2) return [];
+    return this.tableRepository.adminSearchTables(q);
+  }
+
+  async getTableForAdmin(id: string): Promise<{
+    table: Table;
+    requests: JoinRequest[];
+  }> {
+    const table = await this.tableRepository.findByIdWithMembers(id);
+    if (!table) throw new NotFoundException('Table not found');
+
+    const requests = await this.joinRequestRepository.findByTable(id);
+
+    return { table, requests };
+  }
 }

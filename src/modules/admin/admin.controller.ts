@@ -3,6 +3,7 @@ import {
   Get,
   Param,
   ParseUUIDPipe,
+  Patch,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -18,6 +19,8 @@ import type { JwtUser } from 'src/common/types/jwt-user.type';
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
+  // ── users ──────────────────────────────────────────────
+
   @Get('users')
   async searchUsers(@Query('search') search: string) {
     return this.adminService.searchUsers(search);
@@ -29,5 +32,47 @@ export class AdminController {
     @CurrentUser() user: JwtUser,
   ) {
     return this.adminService.getUserDetail(id, user);
+  }
+
+  @Patch('users/:id/ban')
+  @UseGuards(JwtAuthGuard, MinRole(Role.Admin))
+  async banUser(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: JwtUser,
+  ) {
+    return this.adminService.banUser(id, user);
+  }
+
+  @Patch('users/:id/unban')
+  @UseGuards(JwtAuthGuard, MinRole(Role.Admin))
+  async unbanUser(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: JwtUser,
+  ) {
+    return this.adminService.unbanUser(id, user);
+  }
+
+  // ── tables ─────────────────────────────────────────────
+
+  @Get('tables')
+  async searchTables(@Query('search') search: string) {
+    return this.adminService.searchTables(search);
+  }
+
+  @Get('tables/:id')
+  async getTableDetail(@Param('id', ParseUUIDPipe) id: string) {
+    return this.adminService.getTableDetail(id);
+  }
+
+  @Patch('tables/:id/ban')
+  @UseGuards(JwtAuthGuard, MinRole(Role.Admin))
+  async banTable(@Param('id', ParseUUIDPipe) id: string) {
+    return this.adminService.banTable(id);
+  }
+
+  @Patch('tables/:id/unban')
+  @UseGuards(JwtAuthGuard, MinRole(Role.Admin))
+  async unbanTable(@Param('id', ParseUUIDPipe) id: string) {
+    return this.adminService.unbanTable(id);
   }
 }

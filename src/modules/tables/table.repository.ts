@@ -178,4 +178,18 @@ export class TableRepository {
       order: { createdAt: 'DESC' },
     });
   }
+
+  async adminSearchTables(
+    q: string,
+    manager?: EntityManager,
+  ): Promise<Table[]> {
+    const repo = this.getRepo(manager);
+    return repo
+      .createQueryBuilder('table')
+      .leftJoinAndSelect('table.dm', 'dm')
+      .where('table.title ILIKE :q', { q: `%${q}%` })
+      .orderBy('table.createdAt', 'DESC')
+      .limit(20)
+      .getMany();
+  }
 }

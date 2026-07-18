@@ -45,30 +45,6 @@ export class UsersController {
     return this.userService.update(updateUserDto, user.userId);
   }
 
-  @Patch(':id/ban')
-  @UseGuards(JwtAuthGuard, MinRole(Role.Admin))
-  async ban(
-    @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: JwtUser,
-  ) {
-    const data = await this.userService.banUser(id, user);
-    return plainToInstance(UserProfileResponse, data, {
-      excludeExtraneousValues: true,
-    });
-  }
-
-  @Patch(':id/unban')
-  @UseGuards(JwtAuthGuard, MinRole(Role.Admin))
-  async unban(
-    @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: JwtUser,
-  ) {
-    const data = await this.userService.unbanUser(id, user);
-    return plainToInstance(UserProfileResponse, data, {
-      excludeExtraneousValues: true,
-    });
-  }
-
   @Delete('me')
   @UseGuards(JwtAuthGuard)
   async deleteMe(@CurrentUser() user: JwtUser): Promise<void> {

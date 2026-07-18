@@ -149,24 +149,6 @@ export class TablesController {
     return this.tablesService.update(id, updateTableDto, requester);
   }
 
-  @Patch(':id/ban')
-  @UseGuards(JwtAuthGuard, MinRole(Role.Admin))
-  async ban(@Param('id', ParseUUIDPipe) id: string) {
-    const data = await this.tablesService.banTable(id);
-    return plainToInstance(TableDetailResponse, data, {
-      excludeExtraneousValues: true,
-    });
-  }
-
-  @Patch(':id/unban')
-  @UseGuards(JwtAuthGuard, MinRole(Role.Admin))
-  async unban(@Param(':id', ParseUUIDPipe) id: string) {
-    const data = await this.tablesService.unbanTable(id);
-    return plainToInstance(TableDetailResponse, data, {
-      excludeExtraneousValues: true,
-    });
-  }
-
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
   async delete(

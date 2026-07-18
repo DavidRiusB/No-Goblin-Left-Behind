@@ -1,13 +1,8 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
-import { JwtUser } from 'src/common/types/jwt-user.type';
 import { TablesService } from '../tables/tables.service';
+import type { JwtUser } from 'src/common/types/jwt-user.type';
 
-// admin.service.ts
 @Injectable()
 export class AdminService {
   constructor(
@@ -15,11 +10,10 @@ export class AdminService {
     private readonly tablesService: TablesService,
   ) {}
 
+  // ── users ──────────────────────────────────────────────
+
   async searchUsers(search: string) {
-    if (!search?.trim()) {
-      throw new BadRequestException('Search term required');
-    }
-    return this.usersService.adminSearchUsers(search.trim());
+    return this.usersService.adminSearchUsers(search);
   }
 
   async getUserDetail(id: string, requester: JwtUser) {
@@ -27,5 +21,31 @@ export class AdminService {
     const { dmTables, memberships, joinRequests } =
       await this.tablesService.getMyTables(id);
     return { user, dmTables, memberships, joinRequests };
+  }
+
+  async banUser(id: string, requester: JwtUser) {
+    return this.usersService.banUser(id, requester);
+  }
+
+  async unbanUser(id: string, requester: JwtUser) {
+    return this.usersService.unbanUser(id, requester);
+  }
+
+  // ── tables ─────────────────────────────────────────────
+
+  async searchTables(search: string) {
+    return this.tablesService.adminSearchTables(search);
+  }
+
+  async getTableDetail(id: string) {
+    return this.tablesService.getTableForAdmin(id);
+  }
+
+  async banTable(id: string) {
+    return this.tablesService.banTable(id);
+  }
+
+  async unbanTable(id: string) {
+    return this.tablesService.unbanTable(id);
   }
 }
