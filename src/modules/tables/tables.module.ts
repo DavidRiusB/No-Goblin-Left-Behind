@@ -33,5 +33,6 @@ import { UsersModule } from '../users/users.module';
     ReviewsService,
   ],
   controllers: [TablesController],
+  exports: [TablesService],
 })
 export class TablesModule {}

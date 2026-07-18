@@ -16,6 +16,7 @@ import { ChatModule } from './modules/chat/chat.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { BadgesModule } from './modules/badges/badges.module';
 import { ReportsModule } from './modules/reports/reports.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { ReportsModule } from './modules/reports/reports.module';
     ChatModule,
     BadgesModule,
     ReportsModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

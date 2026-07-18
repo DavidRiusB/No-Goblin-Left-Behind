@@ -99,15 +99,15 @@ export class TablesService {
     return this.tableRepository.findWithFilters(filters);
   }
 
-  async getMyTables(requester: JwtUser): Promise<{
+  async getMyTables(userId: string): Promise<{
     dmTables: Table[];
     memberships: TableMembership[];
     joinRequests: JoinRequest[];
   }> {
     const [dmTables, memberships, joinRequests] = await Promise.all([
-      this.tableRepository.findByDm(requester.userId),
-      this.membershipRepository.findByUser(requester.userId),
-      this.joinRequestRepository.findByUser(requester.userId),
+      this.tableRepository.findByDm(userId),
+      this.membershipRepository.findByUser(userId),
+      this.joinRequestRepository.findByUser(userId),
     ]);
 
     return { dmTables, memberships, joinRequests };

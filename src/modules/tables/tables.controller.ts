@@ -45,7 +45,7 @@ export class TablesController {
   @Get('me')
   @UseGuards(JwtAuthGuard)
   async getMyTables(@CurrentUser() requester: JwtUser) {
-    const data = await this.tablesService.getMyTables(requester);
+    const data = await this.tablesService.getMyTables(requester.userId);
     return plainToInstance(MyTablesResponse, data, {
       excludeExtraneousValues: true,
     });
