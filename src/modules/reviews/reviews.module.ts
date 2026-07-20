@@ -10,7 +10,6 @@ import { ReviewsController } from './reviews.controller';
 import { ReviewRepository } from './review.repository';
 import { TableRepository } from '../tables/table.repository';
 import { BadgesModule } from '../badges/badges.module';
-import { BadgesService } from '../badges/badges.service';
 
 @Module({
   imports: [
@@ -19,5 +18,6 @@ import { BadgesService } from '../badges/badges.service';
   ],
   providers: [ReviewsService, ReviewRepository, TableRepository],
   controllers: [ReviewsController],
+  exports: [ReviewsService],
 })
 export class ReviewsModule {}

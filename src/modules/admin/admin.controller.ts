@@ -1,6 +1,8 @@
 import {
   Controller,
+  Delete,
   Get,
+  HttpCode,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -74,5 +76,30 @@ export class AdminController {
   @UseGuards(JwtAuthGuard, MinRole(Role.Admin))
   async unbanTable(@Param('id', ParseUUIDPipe) id: string) {
     return this.adminService.unbanTable(id);
+  }
+
+  // ── reviews ─────────────────────────────────────────────
+
+  @Get('reviews/:id')
+  async getReviewById(@Param('id', ParseUUIDPipe) id: string) {
+    return this.adminService.getReviewDetail(id);
+  }
+
+  @Get('users/:id/reviews')
+  async getUserReviews(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() admin: JwtUser,
+  ) {
+    return this.adminService.findUserReviews(id, admin);
+  }
+
+  @Delete('reviews/:id')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(204)
+  async delete(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() requester: JwtUser,
+  ) {
+    return this.adminService.deleteReview(id, requester);
   }
 }

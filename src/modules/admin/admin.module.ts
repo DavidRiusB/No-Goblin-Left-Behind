@@ -7,7 +7,13 @@ import { ReviewsModule } from '../reviews/reviews.module';
 import { ChatModule } from '../chat/chat.module';
 
 @Module({
-  imports: [UsersModule, TablesModule, ReviewsModule, ChatModule],
+  imports: [
+    UsersModule,
+    TablesModule,
+    ReviewsModule,
+    ChatModule,
+    ReviewsModule,
+  ],
   controllers: [AdminController],
   providers: [AdminService],
 })

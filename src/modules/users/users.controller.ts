@@ -14,10 +14,6 @@ import { JwtAuthGuard } from 'src/common/guards/jwt-auth-guard';
 import { UpdateUserDto } from './dtos/user-update.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { JwtUser } from 'src/common/types/jwt-user.type';
-import { MinRole } from 'src/common/helpers/min-role.guard';
-import { Role } from 'src/common/enums/roles.enum';
-import { plainToInstance } from 'class-transformer';
-import { UserProfileResponse } from './dtos/user-profile-response.dto';
 
 @Controller('users')
 export class UsersController {

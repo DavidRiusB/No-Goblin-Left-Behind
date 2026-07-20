@@ -37,11 +37,15 @@ export class ReviewRepository {
     });
   }
 
-  async findWrittenByUser(userId: string): Promise<Review[]> {
+  async findWrittenByUser(
+    userId: string,
+    includeDeleted = false,
+  ): Promise<Review[]> {
     return this.reviewRepository.find({
       where: { reviewer: { id: userId } },
       relations: { targetUser: true, badges: true, table: true },
       order: { createdAt: 'DESC' },
+      withDeleted: includeDeleted,
     });
   }
 
@@ -77,11 +81,15 @@ export class ReviewRepository {
     }
   }
 
-  async findReceivedByUser(userId: string): Promise<Review[]> {
+  async findReceivedByUser(
+    userId: string,
+    includeDeleted = false,
+  ): Promise<Review[]> {
     return this.reviewRepository.find({
       where: { targetUser: { id: userId } },
       relations: { reviewer: true, table: true, badges: true },
       order: { createdAt: 'DESC' },
+      withDeleted: includeDeleted,
     });
   }
 
@@ -102,7 +110,7 @@ export class ReviewRepository {
     });
   }
 
-  async findById(id: string): Promise<Review | null> {
+  async findById(id: string, includeDeleted = false): Promise<Review | null> {
     return this.reviewRepository.findOne({
       where: { id },
       relations: {
@@ -111,6 +119,7 @@ export class ReviewRepository {
         table: { dm: true },
         badges: true,
       },
+      withDeleted: includeDeleted,
     });
   }
 

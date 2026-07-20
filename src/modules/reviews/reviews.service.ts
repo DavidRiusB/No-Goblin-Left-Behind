@@ -199,4 +199,38 @@ export class ReviewsService {
 
     return summaryByUser;
   }
+
+  async getReviewForAdmin(id: string): Promise<{
+    review: Review;
+    byReviewer: Review[];
+    aboutTarget: Review[];
+  }> {
+    const includeDeleted = true;
+    const review = await this.reviewRepository.findById(id, includeDeleted);
+    if (!review) throw new NotFoundException('Review not found');
+
+    const [byReviewer, aboutTarget] = await Promise.all([
+      this.reviewRepository.findWrittenByUser(
+        review.reviewer.id,
+        includeDeleted,
+      ),
+      this.reviewRepository.findReceivedByUser(
+        review.targetUser.id,
+        includeDeleted,
+      ),
+    ]);
+
+    return { review, byReviewer, aboutTarget };
+  }
+
+  async getUserReviewsForAdmin(
+    id: string,
+  ): Promise<{ written: Review[]; received: Review[] }> {
+    const includeDeleted = true;
+    const [written, received] = await Promise.all([
+      this.reviewRepository.findWrittenByUser(id, includeDeleted),
+      this.reviewRepository.findReceivedByUser(id, includeDeleted),
+    ]);
+    return { written, received };
+  }
 }
