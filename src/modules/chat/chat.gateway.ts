@@ -20,6 +20,19 @@ interface AuthedSocket extends Socket {
 export class ChatGateway {
   private readonly logger = new Logger(ChatGateway.name);
 
+  private msgTimes = new Map<string, number[]>();
+
+  private rateOk(clientId: string, max = 10, windowMs = 10_000): boolean {
+    const now = Date.now();
+    const times = (this.msgTimes.get(clientId) ?? []).filter(
+      (t) => now - t < windowMs,
+    );
+    if (times.length >= max) return false;
+    times.push(now);
+    this.msgTimes.set(clientId, times);
+    return true;
+  }
+
   @WebSocketServer()
   server!: Server;
 
@@ -28,6 +41,10 @@ export class ChatGateway {
     private readonly conversationService: ConversationService,
     private readonly notificationsService: NotificationsService,
   ) {}
+
+  handleDisconnect(client: AuthedSocket) {
+    this.msgTimes.delete(client.id);
+  }
 
   private getUserIdsInRoom(room: string): Set<string> {
     const ids = new Set<string>();
@@ -62,6 +79,9 @@ export class ChatGateway {
     @ConnectedSocket() client: AuthedSocket,
     @MessageBody() data: { conversationId: string; content: string },
   ) {
+    if (!this.rateOk(client.id)) {
+      return { ok: false, error: 'Slow down' };
+    }
     try {
       const { message, conversation } =
         await this.conversationService.sendMessage(
@@ -132,6 +152,9 @@ export class ChatGateway {
     @ConnectedSocket() client: AuthedSocket,
     @MessageBody() data: { tableId: string; content: string },
   ) {
+    if (!this.rateOk(client.id)) {
+      return { ok: false, error: 'Slow down' };
+    }
     try {
       const { message, table } = await this.chatService.sendMessage(
         client.data.userId,
