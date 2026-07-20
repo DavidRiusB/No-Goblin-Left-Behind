@@ -13,10 +13,11 @@ import typeormConfig from './config/typeorm.config';
 import { SeederModule } from './database/seeders/seeder.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
 import { ChatModule } from './modules/chat/chat.module';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { BadgesModule } from './modules/badges/badges.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -49,6 +50,6 @@ import { AdminModule } from './modules/admin/admin.module';
     AdminModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}

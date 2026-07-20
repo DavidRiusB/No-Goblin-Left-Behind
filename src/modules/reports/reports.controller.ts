@@ -23,12 +23,14 @@ import {
 } from './dtos/report-response.dto';
 import { MinRole } from 'src/common/helpers/min-role.guard';
 import { UpdateReportStatusDto } from './dtos/update-report-status.dto';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('reports')
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
   @Post()
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   @UseGuards(JwtAuthGuard)
   async create(@Body() dto: CreateReportDto, @CurrentUser() user: JwtUser) {
     const data = await this.reportsService.create(user, dto);

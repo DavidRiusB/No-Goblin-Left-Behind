@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import { LoginUserDto } from './dtos/login.dto';
 import type { Response } from 'express';
 import { RegisterUserDto } from './dtos/refister.dto';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('auth')
 export class AuthController {
@@ -17,6 +18,7 @@ export class AuthController {
   }
 
   @Post('register')
+  @Throttle({ default: { ttl: 60000, limit: 3 } })
   async register(
     @Body() newUserData: RegisterUserDto,
     @Res({ passthrough: true }) res: Response,
@@ -31,6 +33,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   async login(
     @Body() credentials: LoginUserDto,
     @Res({ passthrough: true }) res: Response,
