@@ -64,4 +64,11 @@ export class UsersService {
     if (!user) throw new NotFoundException('User not found');
     await this.userRepository.softDelete(userId);
   }
+
+  async updateAvatar(userId: string, url: string): Promise<User> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+    user.avatarUrl = url;
+    return this.userRepository.update(user);
+  }
 }

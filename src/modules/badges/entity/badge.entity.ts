@@ -25,6 +25,9 @@ export class Badge {
   @Column()
   icon!: string;
 
+  @Column({ type: 'text', nullable: true })
+  iconUrl!: string | null;
+
   @Column()
   category!: string; // grouping for the picker;
 

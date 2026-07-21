@@ -1,4 +1,6 @@
 import {
+  BadRequestException,
+  Body,
   Controller,
   Delete,
   Get,
@@ -6,8 +8,11 @@ import {
   Param,
   ParseUUIDPipe,
   Patch,
+  Post,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { Role } from 'src/common/enums/roles.enum';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth-guard';
@@ -15,6 +20,11 @@ import { MinRole } from 'src/common/helpers/min-role.guard';
 import { AdminService } from './admin.service';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { JwtUser } from 'src/common/types/jwt-user.type';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { CreateBadgeDto } from './dtos/create-badge.dto';
+import { UpdateBadgeDto } from './dtos/update-badge.dto';
+import { SetActiveDto } from './dtos/set-active.dto';
+import { imageUploadOptions } from 'src/common/upload/image-upload.options';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, MinRole(Role.Moderator))
@@ -101,5 +111,53 @@ export class AdminController {
     @CurrentUser() requester: JwtUser,
   ) {
     return this.adminService.deleteReview(id, requester);
+  }
+
+  // ── Badges ─────────────────────────────────────────────
+
+  @Get('badges')
+  async listBadges(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.adminService.listBadges(
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 20,
+    );
+  }
+
+  @Post('badges')
+  @UseGuards(JwtAuthGuard, MinRole(Role.SuperAdmin))
+  @UseInterceptors(FileInterceptor('file', imageUploadOptions))
+  async createBadge(
+    @Body() dto: CreateBadgeDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.adminService.createBadge(dto, file);
+  }
+
+  @Patch('badges/:id/active')
+  async setActive(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: SetActiveDto,
+  ) {
+    return this.adminService.setBadgeActive(id, dto.isActive);
+  }
+
+  @Patch('badges/:id')
+  async update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateBadgeDto,
+  ) {
+    return this.adminService.updateBadge(id, dto);
+  }
+
+  @Patch('badges/:id/icon')
+  @UseInterceptors(FileInterceptor('file', imageUploadOptions))
+  async updateBadgeIcon(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.adminService.updateBadgeIcon(id, file);
   }
 }

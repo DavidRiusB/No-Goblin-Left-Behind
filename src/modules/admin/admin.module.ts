@@ -5,6 +5,8 @@ import { UsersModule } from '../users/users.module';
 import { TablesModule } from '../tables/tables.module';
 import { ReviewsModule } from '../reviews/reviews.module';
 import { ChatModule } from '../chat/chat.module';
+import { UploadsModule } from '../uploads/uploads.module';
+import { BadgesModule } from '../badges/badges.module';
 
 @Module({
   imports: [
@@ -13,6 +15,8 @@ import { ChatModule } from '../chat/chat.module';
     ReviewsModule,
     ChatModule,
     ReviewsModule,
+    BadgesModule,
+    UploadsModule,
   ],
   controllers: [AdminController],
   providers: [AdminService],

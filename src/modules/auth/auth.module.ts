@@ -10,6 +10,8 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { Credential } from './entity/auth.entity';
 import { AuthRepository } from './auth.repository';
 import { PassportModule } from '@nestjs/passport';
+import { BadgesModule } from '../badges/badges.module';
+import { UploadsModule } from '../uploads/uploads.module';
 
 @Module({
   imports: [
@@ -24,6 +26,8 @@ import { PassportModule } from '@nestjs/passport';
       }),
     }),
     UsersModule,
+    BadgesModule,
+    UploadsModule,
   ],
   providers: [AuthService, AuthRepository, JwtStrategy],
   controllers: [AuthController],

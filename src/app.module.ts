@@ -18,6 +18,7 @@ import { BadgesModule } from './modules/badges/badges.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { APP_GUARD } from '@nestjs/core';
+import { UploadsModule } from './modules/uploads/uploads.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { APP_GUARD } from '@nestjs/core';
     BadgesModule,
     ReportsModule,
     AdminModule,
+    UploadsModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
