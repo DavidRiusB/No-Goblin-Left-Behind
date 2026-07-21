@@ -24,7 +24,7 @@ export class UploadsService {
           public_id: userId, // one avatar per user — overwrites on re-upload
           overwrite: true,
           transformation: [
-            { width: 400, height: 400, crop: 'fill', gravity: 'face' },
+            { width: 400, height: 400, crop: 'fill' },
             { quality: 'auto', fetch_format: 'auto' },
           ],
         },
