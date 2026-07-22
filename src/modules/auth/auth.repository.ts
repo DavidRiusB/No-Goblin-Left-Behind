@@ -53,4 +53,27 @@ export class AuthRepository {
       throw new InternalServerErrorException('Error creating Credentials');
     }
   }
+
+  async updatePassword(
+    user: User,
+    passwordHash: string,
+    manager?: EntityManager,
+  ): Promise<Credential> {
+    const repo = this.getRepo(manager);
+    const credential = await repo.findOne({
+      where: { user: { id: user.id } },
+    });
+
+    if (!credential) {
+      throw new InternalServerErrorException('Credential not found');
+    } // do we need this shit ?? for real ? there shuld not be posible to create a user with out credentials
+
+    credential.passwordHash = passwordHash;
+
+    try {
+      return await repo.save(credential);
+    } catch {
+      throw new InternalServerErrorException('Error updating password');
+    }
+  }
 }

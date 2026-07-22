@@ -19,6 +19,8 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { APP_GUARD } from '@nestjs/core';
 import { UploadsModule } from './modules/uploads/uploads.module';
+import { TokensModule } from './modules/tokens/tokens.module';
+import { MailModule } from './modules/mail/mail.module';
 
 @Module({
   imports: [
@@ -50,6 +52,8 @@ import { UploadsModule } from './modules/uploads/uploads.module';
     ReportsModule,
     AdminModule,
     UploadsModule,
+    TokensModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

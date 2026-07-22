@@ -11,6 +11,8 @@ import { Credential } from './entity/auth.entity';
 import { AuthRepository } from './auth.repository';
 import { PassportModule } from '@nestjs/passport';
 import { BadgesModule } from '../badges/badges.module';
+import { TokensModule } from '../tokens/tokens.module';
+import { MailModule } from '../mail/mail.module';
 import { UploadsModule } from '../uploads/uploads.module';
 
 @Module({
@@ -26,8 +28,9 @@ import { UploadsModule } from '../uploads/uploads.module';
       }),
     }),
     UsersModule,
-    BadgesModule,
-    UploadsModule,
+
+    TokensModule,
+    MailModule,
   ],
   providers: [AuthService, AuthRepository, JwtStrategy],
   controllers: [AuthController],

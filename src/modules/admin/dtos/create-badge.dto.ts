@@ -10,7 +10,6 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import { BadgeCategory } from 'src/common/enums/badge-category.enum';
 import { ReviewType } from 'src/common/enums/review-type.enum';
 
 export class CreateBadgeDto {
@@ -37,8 +36,10 @@ export class CreateBadgeDto {
   @MaxLength(16) // an emoji or two, not a paragraph
   icon!: string;
 
-  @IsEnum(BadgeCategory)
-  category!: BadgeCategory;
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(50)
+  category!: string;
 
   @IsOptional()
   @IsEnum(ReviewType)

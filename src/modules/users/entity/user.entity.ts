@@ -90,6 +90,8 @@ export class User {
   memberships!: TableMembership[];
 
   // Timestamps
+  @Column({ type: 'boolean', default: false })
+  verified?: boolean;
 
   @CreateDateColumn()
   createdAt!: Date;
