@@ -235,6 +235,10 @@ export class TablesService {
     requester: JwtUser,
     data: CreateJoinRequestDto,
   ): Promise<JoinRequest> {
+    if (!requester.verified) {
+      throw new ForbiddenException('Email not verified');
+    }
+
     const table = await this.findById(tableId);
     if (table.bannedAt)
       throw new BadRequestException('This table is not accepting requests');

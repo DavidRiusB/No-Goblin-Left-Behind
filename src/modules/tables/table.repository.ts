@@ -100,7 +100,9 @@ export class TableRepository {
     }
 
     if (filters.to) {
-      query.andWhere('table.scheduledAt <= :to', { to: filters.to });
+      query.andWhere("table.scheduledAt < :to::date + INTERVAL '1 day'", {
+        to: filters.to,
+      });
     }
 
     if (filters.recurrence) {

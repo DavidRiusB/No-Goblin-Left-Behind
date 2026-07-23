@@ -28,6 +28,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       userId: user.id,
       email: payload.email,
       role: user.role, // ← live role, not the token's stale claim
+      verified: user.verified,
     };
   }
 }

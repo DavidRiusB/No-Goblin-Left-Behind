@@ -4,4 +4,5 @@ export type JwtUser = {
   userId: string;
   email: string;
   role: Role;
+  verified: boolean;
 };
