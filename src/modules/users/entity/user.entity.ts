@@ -91,7 +91,7 @@ export class User {
 
   // Timestamps
   @Column({ type: 'boolean', default: false })
-  verified?: boolean;
+  verified!: boolean;
 
   @CreateDateColumn()
   createdAt!: Date;
