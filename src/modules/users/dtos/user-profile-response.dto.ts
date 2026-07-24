@@ -12,6 +12,7 @@ class BadgeResponse {
   @Expose() code!: string;
   @Expose() label!: string;
   @Expose() icon!: string;
+  @Expose() iconUrl!: string | null;
 }
 
 export class ReviewResponse {

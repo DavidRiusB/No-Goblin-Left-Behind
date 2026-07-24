@@ -7,4 +7,5 @@ export class BadgeResponse {
   @Expose() icon!: string;
   @Expose() category!: string;
   @Expose() appliesTo!: string | null;
+  @Expose() iconUrl!: string | null;
 }
